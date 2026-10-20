@@ -284,6 +284,17 @@ button:active,.meal:active{transform:scale(.97)}
 .mini{width:84px;height:84px;border:3px solid var(--line);box-shadow:inset 0 0 0 5px var(--surface),0 3px 10px rgba(0,0,0,.10)}
 .mz{font-size:17px}
 .mz .ph{opacity:.32;filter:grayscale(.6)}
+/* Cabecera centrada */
+.hero .in{text-align:center;justify-items:center}
+.hero .in>.days{justify-self:stretch}
+.hero h1,.hero .sub,.hero .brand,.streak{text-shadow:0 1px 3px rgba(15,20,45,.55),0 2px 14px rgba(15,20,45,.45)}
+.streak{justify-content:center}
+#v-dia .hrow{position:relative;justify-content:center;width:100%}
+#v-dia .hrow>div:first-child{flex:1;padding-inline:62px}
+#v-dia .hrow .ring{position:absolute;right:0;top:0}
+.sunarc{width:100%;justify-items:center}
+.sunarc .lab{width:100%}
+@media (max-width:380px){#v-dia .hrow>div:first-child{padding-inline:54px}}
 /* Modo noche: tonos rojos después del atardecer */
 :root[data-night]{
   --bg:#120605; --surface:#1d0a08; --glass:rgba(32,10,8,.88); --line:#3b1712; --fg:#ffbfae; --muted:#d08a76;
