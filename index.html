@@ -252,6 +252,9 @@ button:active,.meal:active{transform:scale(.97)}
 .hrow>div:first-child{min-width:0;flex:1}
 .hero .in>*{min-width:0}
 .hpill{max-width:100%}
+/* Deja sitio a la barra de estado del móvil (hora, batería) */
+.hero{padding-top:max(22px,calc(env(safe-area-inset-top,0px) + 12px))!important}
+.sheetin{max-height:calc(100% - env(safe-area-inset-top,0px) - 12px)}
 /* Modo noche: tonos rojos después del atardecer */
 :root[data-night]{
   --bg:#120605; --surface:#1d0a08; --glass:rgba(32,10,8,.88); --line:#3b1712; --fg:#ffbfae; --muted:#d08a76;
