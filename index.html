@@ -75,6 +75,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .rows li:last-child{border-bottom:0}
 .rows li.grp{display:block;border:0;padding:14px 0 2px;font-weight:700;color:var(--gold);font-size:16px}
 .why{margin-top:6px;display:inline-block;width:100%;text-decoration:none}.why summary{display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:15px;font-weight:600;color:var(--gold);list-style:none;min-height:32px}.why summary::-webkit-details-marker{display:none}.why summary::before{content:"💡"}.why p{margin:4px 0 2px;font-size:15px;line-height:1.45;color:var(--muted);font-weight:400}
+.wdays{gap:6px;flex-wrap:nowrap}.wdays .chip{flex:1;min-width:0}.wdays .chip span{width:100%;min-width:0;justify-content:center;padding:8px 0}
+.wtag{display:inline-block;margin-left:6px;font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
 .setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
@@ -147,7 +149,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .acts button.danger{color:var(--danger)}
 .acts button.sure{background:var(--danger);color:var(--surface)}
 label.f{display:grid;gap:6px;font-weight:600}
-select,input[type=time]{min-height:52px;font-size:19px;color:var(--fg);background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:8px 12px;width:100%}
+select,input[type=time],input[type=text]{min-height:52px;font-size:19px;color:var(--fg);background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:8px 12px;width:100%}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative}
 .chip input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
@@ -407,6 +409,16 @@ button:active,.meal:active{transform:scale(.97)}
     <label class="f">🙋‍♀️ Me llamo<input type="text" id="uname" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words"></label>
     <label class="f">📍 Vivo en<select id="city"></select></label>
     <label class="f">⏰ Me despierto a las<input type="time" id="wake" value="07:00"></label>
+    <div class="setgrp" style="border-top:0;padding-top:0">
+      <label class="chip" style="justify-self:start"><input type="checkbox" id="wOn"><span>💼 Trabajo fuera de casa</span></label>
+      <div id="wBox" hidden style="display:grid;gap:10px">
+        <span style="font-weight:600">Qué días trabajo</span>
+        <div class="chips wdays" id="wDays"></div>
+        <div class="row2"><label class="f">Entro a las<input type="time" id="wFrom" value="08:00"></label><label class="f">Salgo a las<input type="time" id="wTo" value="15:00"></label></div>
+        <label class="f">☕ Mi descanso es a las <span class="muted" style="font-weight:400;font-size:15px">(si no tienes, déjalo vacío)</span><input type="time" id="wBrk"></label>
+        <p class="muted note">Las comidas, el sol y el paseo que caigan en tu horario de trabajo se mueven a tu descanso o a antes o después del trabajo.</p>
+      </div>
+    </div>
     <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><div class="chips" id="habits"></div></div>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
@@ -488,6 +500,8 @@ function localMin(ms,tz){const p=new Intl.DateTimeFormat("es-ES",{timeZone:tz,ho
 const todayIn=tz=>new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 
 const saved=st("mdt-set");
+$("wDays").innerHTML=["L","M","X","J","V","S","D"].map((l,i)=>`<label class="chip"><input type="checkbox" id="wd-${i}"${i<5?" checked":""}><span>${l}</span></label>`).join("");
+const wSync=()=>{$("wBox").hidden=!$("wOn").checked};
 try{$("nightOn").checked=localStorage.getItem("mdt-night")!=="0"}catch(e){}
 $("nightOn").addEventListener("change",()=>{try{localStorage.setItem("mdt-night",$("nightOn").checked?"1":"0")}catch(e){};renderDay()});
 let tzIdx=byName("Madrid");
@@ -500,7 +514,8 @@ try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f
   else{try{const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;const f=DEF[tz]?byName(DEF[tz]):CITIES.findIndex(c=>c[3]===tz);if(f>=0)idx=f}catch(e){}}
   if(!saved||saved.gps)idx=GPS_I;
   sel.value=idx;
-  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
+  setTimeout(wSync,0);
+  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(saved.w){$("wOn").checked=!!saved.w.on;if(saved.w.from)$("wFrom").value=saved.w.from;if(saved.w.to)$("wTo").value=saved.w.to;$("wBrk").value=saved.w.brk||"";if(Array.isArray(saved.w.days))for(let i=0;i<7;i++)$("wd-"+i).checked=saved.w.days.includes(i)}if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
 })();
 function locate(){
   const fail=()=>{if(!st("mdt-gps")&&+sel.value===GPS_I){sel.value=tzIdx;saveSet();renderDay();window.__wxGet&&window.__wxGet()}};
@@ -511,7 +526,8 @@ function locate(){
     fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`).then(r=>r.json()).then(j=>{const n=j.city||j.locality||j.principalSubdivision;if(n){c[0]=n;$("optGps").textContent="📍 "+n+" (automática)";st("mdt-gps",{lat,lng,name:n});renderDay()}}).catch(()=>{});
   },fail,{timeout:15000,maximumAge:3600000});
 }
-function saveSet(){st("mdt-set",{nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
+function saveSet(){st("mdt-set",{w:{on:$("wOn").checked,from:$("wFrom").value,to:$("wTo").value,brk:$("wBrk").value,days:[0,1,2,3,4,5,6].filter(i=>$("wd-"+i).checked)},nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
+$("wOn").addEventListener("change",wSync);
 $("openSet").addEventListener("click",()=>openS("setSheet","setClose"));
 $("setClose").addEventListener("click",()=>{saveSet();closeS("setSheet")});
 
@@ -543,7 +559,7 @@ const saveLog=()=>st("mdt-log",LOG);
 const FACES={e:[["😩","Poca"],["😐","Normal"],["😊","Mucha"]],s:[["😩","Mal"],["😐","Normal"],["😊","Excelente"]],h:[["😣","Bastante"],["😐","Media"],["😊","Muy baja"]]};
 const QS=[["e","Mi energía"],["s","Cómo dormí"],["h","Hinchazón"]];
 const faceRows=(X,attr)=>QS.map(([q,l])=>`<div class="cirow"><span>${l}</span><div class="faces">${FACES[q].map(([em,w],i)=>`<button type="button" ${attr}="${q}" data-v="${i+1}" aria-pressed="${X[q]===i+1}"><span aria-hidden="true">${em}</span>${w}</button>`).join("")}</div></div>`).join("");
-const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<span class="t">${e.title}<small>${e.text}</small>${WHY[e.title]?`<details class="why" data-why="${e.title}"${whyOpen.has(e.title)?" open":""}><summary>¿Por qué?</summary><p>${WHY[e.title]}</p></details>`:""}</span><time>${fmt(e.t)}</time></li>`;
+const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<span class="t">${e.title}${e.moved?`<span class="wtag">💼 adaptado</span>`:""}<small>${e.text}</small>${WHY[e.title]?`<details class="why" data-why="${e.title}"${whyOpen.has(e.title)?" open":""}><summary>¿Por qué?</summary><p>${WHY[e.title]}</p></details>`:""}</span><time>${fmt(e.t)}</time></li>`;
 
 function sched(y,m,d,lat,lng,tz,dow){
   const s=sun(y,m,d,lat,lng);
@@ -567,6 +583,27 @@ function sched(y,m,d,lat,lng,tz,dow){
   add(ss,"Luces rojas o gafas rojas","Se pone el sol: apaga las luces blancas y pon luces rojas o ponte gafas rojas.");
   if(has("magnesio"))add(bed-60,"Magnesio","Una hora antes de dormir.");
   add(bed,"A la cama","Para dormir 8 horas.");
+  if($("wOn").checked&&$("wd-"+dow).checked){
+    const ws=toMin($("wFrom").value),we=toMin($("wTo").value),bk=toMin($("wBrk").value);
+    if(ws!=null&&we!=null&&we>ws){
+      const inW=t=>t>=ws&&t<we,FOOD=["Desayuno","Comida","Mi comida del día"],OUT=["Sol de la mañana","Grounding"],AFTER=["Caminar","Fuerza","Cena"];
+      let brkUsed=false;const mark=(e,t,why)=>{e.t=t;e.text=e.text+" "+why;e.moved=true};
+      ev.slice().sort((a,b)=>a.t-b.t).forEach(e=>{if(!inW(e.t))return;
+        if(FOOD.includes(e.title)){
+          if(bk!=null&&inW(bk)&&!brkUsed){brkUsed=true;mark(e,bk,"Movida a tu descanso.")}
+          else if(e.t<(ws+we)/2&&ws-30>=wake+20)mark(e,ws-30,"Antes de entrar a trabajar.");
+          else mark(e,we+15,"Al salir del trabajo.")}
+        else if(OUT.includes(e.title)){
+          if(ws-25>=Math.max(sr,wake))mark(e,ws-25-(e.title==="Grounding"?0:15),"Antes de entrar a trabajar.");
+          else if(bk!=null&&inW(bk))mark(e,bk+(e.title==="Grounding"?15:0),"En tu descanso, si puedes salir fuera.");
+          else mark(e,we+10,"Al salir del trabajo.")}
+        else if(AFTER.includes(e.title))mark(e,we+(e.title==="Cena"?20:e.title==="Fuerza"?60:15),"Al salir del trabajo.");
+      });
+      const main=ev.find(e=>e.title==="Comida"||e.title==="Mi comida del día"),cw=ev.find(e=>e.title==="Caminar");
+      if(main&&cw&&main.moved&&cw.t<main.t+30){cw.t=main.t+30;if(!cw.moved){cw.moved=true;cw.text+=" Después de tu comida."}}
+      const fz=ev.find(e=>e.title==="Fuerza");if(fz&&main&&fz.t<main.t+60){fz.t=main.t+60;if(!fz.moved){fz.moved=true;fz.text+=" Al salir del trabajo."}}
+    }
+  }
   ev.sort((a,b)=>a.t-b.t);
   return {ev,sr,sn,ss};
 }
@@ -646,7 +683,7 @@ $("checkin").addEventListener("click",e=>{
   const X=getL($("checkin").dataset.k);X[b.dataset.q]=+b.dataset.v;saveLog();
   if(X.e&&X.s&&X.h)ciEdit=false;renderDay();
 });
-["city","wake","uname","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
+["city","wake","uname","wOn","wFrom","wTo","wBrk","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
 document.addEventListener("click",e=>{const sm=e.target.closest(".why summary");if(!sm)return;const t=sm.parentElement.dataset.why;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t)});
 function saveFile(name,type,text,onOk){
   const blob=new Blob([text],{type});
