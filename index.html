@@ -284,6 +284,9 @@ button:active,.meal:active{transform:scale(.97)}
 .mini{width:84px;height:84px;border:3px solid var(--line);box-shadow:inset 0 0 0 5px var(--surface),0 3px 10px rgba(0,0,0,.10)}
 .mz{font-size:17px}
 .mz .ph{opacity:.32;filter:grayscale(.6)}
+.hero h1.long{font-size:clamp(26px,7.4vw,40px)}
+.hero .quote{margin:6px 0 0;font-size:15px;font-style:italic;opacity:.95;line-height:1.35;text-shadow:0 1px 3px rgba(15,20,45,.6),0 2px 12px rgba(15,20,45,.45)}
+.hero .quote.special{font-style:normal;font-weight:700;color:#ffe3a3}
 /* Cabecera centrada */
 .hero .in{text-align:center;justify-items:center}
 .hero .in>.days{justify-self:stretch}
@@ -314,6 +317,7 @@ button:active,.meal:active{transform:scale(.97)}
         <div class="brand">Tribu Tiroidea</div>
         <h1 id="hello">Buenos días</h1>
         <p class="sub" id="sunline"></p>
+        <p class="quote" id="quote"></p>
       </div>
       <div class="ring" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="var(--hero-soft)" stroke-width="7"/><circle id="ringArc" cx="32" cy="32" r="27" fill="none" stroke="var(--sun)" stroke-width="7" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/></svg><b id="ringTxt">0/0</b></div>
     </div>
@@ -400,6 +404,7 @@ button:active,.meal:active{transform:scale(.97)}
   <div class="sheetin" role="dialog" aria-modal="true" aria-labelledby="setTitle">
     <div class="grab"></div>
     <div class="sheethead"><h2 id="setTitle">Mis datos</h2><button type="button" id="setClose">Listo</button></div>
+    <label class="f">🙋‍♀️ Me llamo<input type="text" id="uname" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words"></label>
     <label class="f">📍 Vivo en<select id="city"></select></label>
     <label class="f">⏰ Me despierto a las<input type="time" id="wake" value="07:00"></label>
     <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><div class="chips" id="habits"></div></div>
@@ -495,7 +500,7 @@ try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f
   else{try{const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;const f=DEF[tz]?byName(DEF[tz]):CITIES.findIndex(c=>c[3]===tz);if(f>=0)idx=f}catch(e){}}
   if(!saved||saved.gps)idx=GPS_I;
   sel.value=idx;
-  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
+  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
 })();
 function locate(){
   const fail=()=>{if(!st("mdt-gps")&&+sel.value===GPS_I){sel.value=tzIdx;saveSet();renderDay();window.__wxGet&&window.__wxGet()}};
@@ -506,7 +511,7 @@ function locate(){
     fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`).then(r=>r.json()).then(j=>{const n=j.city||j.locality||j.principalSubdivision;if(n){c[0]=n;$("optGps").textContent="📍 "+n+" (automática)";st("mdt-gps",{lat,lng,name:n});renderDay()}}).catch(()=>{});
   },fail,{timeout:15000,maximumAge:3600000});
 }
-function saveSet(){st("mdt-set",{gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
+function saveSet(){st("mdt-set",{nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
 $("openSet").addEventListener("click",()=>openS("setSheet","setClose"));
 $("setClose").addEventListener("click",()=>{saveSet();closeS("setSheet")});
 
@@ -530,6 +535,7 @@ const WHY={"Me despierto":"Durante la noche se acumulan bacterias en la boca y l
 "Magnesio":"El magnesio ayuda a relajar los músculos y el sistema nervioso, y mucha gente nota que duerme mejor.",
 "A la cama":"Mientras duermes tu cuerpo se repara. Acostarte siempre a la misma hora lo hace mucho más fácil."};
 const whyOpen=new Set();
+const FRASES=["El sol de la mañana es tu primer café.","No tienes que hacerlo perfecto, solo no soltarlo.","Cena con luz, duerme con oscuridad.","Tu cuerpo sigue al sol, aunque tú no lo mires.","Comida real, sin lista de ingredientes.","Hoy, un poco mejor que ayer. Con eso basta.","La proteína primero; lo demás, después.","Descalza en la tierra, la cabeza se calma.","Descansar también es avanzar.","Lo que haces cada día pesa más que lo que haces de vez en cuando.","Bebe agua antes de buscar el café.","Tu energía se construye por la mañana y se protege por la noche.","Un paseo después de comer vale más de lo que parece.","Al atardecer, luces bajas y calma.","Escúchate: tu cuerpo te habla todos los días.","Pequeños hábitos, grandes cambios.","Hoy no se trata de ganas, se trata de costumbre.","Cuidarte no es egoísmo, es lo que te permite cuidar al resto.","Mira el amanecer: es gratis y te cambia el día.","La fuerza no es solo músculo, es constancia.","Si hoy cuesta, haz solo uno. Uno ya cuenta.","Más sol, menos pantallas.","Come hasta quedarte a gusto, no hasta reventar.","El mejor plan es el que puedes repetir.","Tu ritmo es tuyo. No te compares.","La calma también se entrena.","Lo natural no tiene prisa, pero llega.","Cada flor de tu jardín es un día que elegiste cuidarte.","Sal fuera aunque esté nublado: la luz sigue ahí.","Menos paquetes, más mercado.","Dormir bien es el hábito que sostiene a los demás.","Tu cuerpo agradece la rutina.","Empieza por lo fácil y lo difícil llegará solo.","Hoy también cuenta.","Respira hondo, mira el cielo y sigue."];
 const dk=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const dAgo=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-n);return d};
 const getL=k=>LOG[k]||(LOG[k]={d:[]});
@@ -588,7 +594,20 @@ function renderDay(){
   $("ringArc").setAttribute("stroke-dashoffset",(169.6*(1-nd/tasks.length)).toFixed(1));
   $("ringTxt").textContent=`${nd}/${tasks.length}`;
   window.__mdtAllDone=tasks.length>0&&nd===tasks.length;
-  $("hello").textContent=nowM<13*60?"Buenos días":nowM<20*60?"Buenas tardes":"Buenas noches";
+  {const nom=$("uname").value.trim(),hl=$("hello");hl.textContent=(nowM<13*60?"Buenos días":nowM<20*60?"Buenas tardes":"Buenas noches")+(nom?", "+nom:"");hl.classList.toggle("long",hl.textContent.length>15)}
+  {const doy=Math.floor((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/864e5),md=m*100+d,south=lat<0;
+   const age=(((Date.now()-947182440000)/864e5)%29.530588+29.530588)%29.530588;
+   let sp="";
+   if(md===621)sp=south?"🌙 Hoy es el día más corto del año. Desde mañana, cada día más luz.":"🌞 Hoy es el día más largo del año. ¡Aprovecha la luz!";
+   else if(md===1221)sp=south?"🌞 Hoy es el día más largo del año. ¡Aprovecha la luz!":"🌙 Hoy es el día más corto del año. Desde mañana, cada día más luz.";
+   else if(md===320||md===922)sp="⚖️ Equinoccio: hoy el día y la noche duran casi lo mismo.";
+   else if(md===1224||md===1225)sp="🎄 ¡Feliz Navidad! Hoy disfruta, sin agobios.";
+   else if(md===1231)sp="✨ Último día del año. Gracias por cuidarte.";
+   else if(md===101)sp="🌅 Año nuevo, mismo sol. Vamos a por ello.";
+   else if(Math.abs(age-14.77)<0.75)sp="🌕 Esta noche hay luna llena.";
+   else if(age<0.75||age>28.78)sp="🌑 Luna nueva: noche muy oscura, ideal para dormir profundo.";
+   window.__mdtXmas=md>=1220||md<=106;window.__mdtGold=(md===621&&!south)||(md===1221&&south);
+   const q=$("quote");q.textContent=sp||FRASES[doy%FRASES.length];q.classList.toggle("special",!!sp)}
   const nowEl=$("now");
   if(!tasks.some(e=>!isDone(e)))nowEl.innerHTML=`<div class="top"><div class="big">🎉</div><div><small>Hoy</small><h2>¡Lo has hecho todo!</h2></div></div><p>Descansa. Mañana, más.</p>`;
   else if(!cur){const e=ev[0];nowEl.innerHTML=`<div class="top"><div class="big">${ic(e.title)}</div><div><small>Mañana empiezas con</small><h2>${e.title}</h2><span class="time">${fmt(e.t)}</span></div></div>`}
@@ -627,7 +646,7 @@ $("checkin").addEventListener("click",e=>{
   const X=getL($("checkin").dataset.k);X[b.dataset.q]=+b.dataset.v;saveLog();
   if(X.e&&X.s&&X.h)ciEdit=false;renderDay();
 });
-["city","wake","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
+["city","wake","uname","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
 document.addEventListener("click",e=>{const sm=e.target.closest(".why summary");if(!sm)return;const t=sm.parentElement.dataset.why;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t)});
 function saveFile(name,type,text,onOk){
   const blob=new Blob([text],{type});
@@ -944,7 +963,7 @@ function draw(t){
   let refX=null,refC=null,refA=0;
   if(alt>-6){
     const sx=W*(0.5+clamp(ha/180,-0.5,0.5)*0.9),syc=hor-clamp(alt/60,-0.2,1)*(hor-r-36)+r*0.25;
-    const boost=window.__mdtAllDone?1.7:1;
+    const boost=window.__mdtAllDone||window.__mdtGold?1.7:1;
     const gw=ctx.createRadialGradient(sx,syc,r*0.4,sx,syc,r*(alt>15?3:5)*boost);
     gw.addColorStop(0,`rgba(${glowRGB.join(",")},${Math.min(.85,(alt>15?.45:.6)+(boost>1?.2:0))})`);gw.addColorStop(1,`rgba(${glowRGB.join(",")},0)`);
     ctx.fillStyle=gw;ctx.fillRect(0,0,W,hor);
@@ -1006,6 +1025,15 @@ function draw(t){
   }}
   if(rainy){ctx.strokeStyle=alt>-4?"rgba(225,232,245,.38)":"rgba(170,185,215,.3)";ctx.lineWidth=1;ctx.beginPath();
     for(const [x0,y0,v] of RN){const y=((y0+t*0.9*v)%1)*(H+40)-20,x=((x0-t*0.08*v)%1+1)%1*W;ctx.moveTo(x,y);ctx.lineTo(x-4,y+14*v)}ctx.stroke()}
+  // delfines
+  if(alt>-3&&!(wc>=95)&&!fog){const dTest=location.search.includes("delfin"),cyc=Math.floor(t/(dTest?4:41)),ph=dTest?t%4:t%41;if(ph<3.2&&(dTest||rn(cyc+70)>0.3)){const dir=rn(cyc+71)<.5?1:-1,sx=W*(0.18+rn(cyc+72)*0.64),sy=hor+Math.min(140,(H-hor)*0.12)*(0.35+rn(cyc+73)*0.65),sc=Math.min(1.6,W/330)*(0.95+rn(cyc+74)*0.3);
+    const col=alt>8?"rgba(42,58,88,.95)":alt>-1?"rgba(40,32,56,.95)":"rgba(14,16,30,.92)";
+    for(let j=0;j<2;j++){const k=(ph-j*0.45)/1.5;if(k<0||k>1)continue;const span=70*sc,x=sx+dir*(k-0.5)*span-dir*j*26*sc,y=sy+j*6-Math.sin(k*Math.PI)*34*sc,ang=Math.atan2(-Math.cos(k*Math.PI)*34*sc*Math.PI,span)*dir;
+      ctx.save();ctx.beginPath();ctx.rect(0,0,W,sy+j*6+1);ctx.clip();ctx.translate(x,y);ctx.scale(dir,1);ctx.rotate(ang*dir);ctx.fillStyle=col;
+      ctx.beginPath();ctx.moveTo(14*sc,0);ctx.quadraticCurveTo(10*sc,-6*sc,-2*sc,-6*sc);ctx.quadraticCurveTo(-10*sc,-5*sc,-15*sc,-1*sc);ctx.lineTo(-20*sc,-5*sc);ctx.lineTo(-18*sc,1*sc);ctx.lineTo(-21*sc,5*sc);ctx.lineTo(-14*sc,2*sc);ctx.quadraticCurveTo(-4*sc,4*sc,8*sc,2.5*sc);ctx.lineTo(16*sc,1.5*sc);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(-1*sc,-5.5*sc);ctx.lineTo(-5*sc,-11*sc);ctx.lineTo(-6*sc,-5*sc);ctx.closePath();ctx.fill();ctx.restore();
+      for(const e of [0.06,0.94])if(Math.abs(k-e)<0.07){const ex=sx+dir*(e-0.5)*span-dir*j*26*sc,a=1-Math.abs(k-e)/0.07;ctx.fillStyle=`rgba(255,255,255,${(a*0.7).toFixed(2)})`;for(let q=0;q<5;q++){ctx.beginPath();ctx.arc(ex+(q-2)*3*sc,sy+j*6-a*(3+q%2*4)*sc,1.6*sc,0,6.2832);ctx.fill()}}}}}
+  if(window.__mdtXmas&&!snowy&&!rainy){ctx.fillStyle="rgba(255,255,255,.55)";for(let q=0;q<RN.length;q+=2){const [x0,y0,v]=RN[q];const y=((y0+t*0.05*v)%1)*H,x=x0*W+Math.sin(t*v+y0*9)*10;ctx.beginPath();ctx.arc(x,y,0.8+v*0.8,0,6.2832);ctx.fill()}}
   if(snowy){ctx.fillStyle="rgba(255,255,255,.75)";for(const [x0,y0,v] of RN){const y=((y0+t*0.06*v)%1)*H,x=x0*W+Math.sin(t*v+y0*9)*10;ctx.beginPath();ctx.arc(x,y,1+v,0,6.2832);ctx.fill()}}
   if(wc>=95&&(t%9)<0.12){ctx.fillStyle="rgba(255,255,255,.28)";ctx.fillRect(0,0,W,H)}
 }
