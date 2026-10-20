@@ -74,6 +74,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .rows li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
 .rows li:last-child{border-bottom:0}
 .rows li.grp{display:block;border:0;padding:14px 0 2px;font-weight:700;color:var(--gold);font-size:16px}
+.why{margin-top:6px}.why summary{display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:15px;font-weight:600;color:var(--gold);list-style:none;min-height:32px}.why summary::-webkit-details-marker{display:none}.why summary::before{content:"💡"}.why p{margin:4px 0 2px;font-size:15px;line-height:1.45;color:var(--muted);font-weight:400}
+.setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
 .rows .ic{font-size:22px;width:28px;text-align:center;flex:none}
@@ -348,6 +350,13 @@ button:active,.meal:active{transform:scale(.97)}
     <label class="f">⏰ Me despierto a las<input type="time" id="wake" value="07:00"></label>
     <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><div class="chips" id="habits"></div></div>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
+    <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
+      <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
+      <p class="muted note" id="icsNote">Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada. Renuévalos una vez al mes.</p></div>
+    <div class="setgrp"><span style="font-weight:600">💾 Copia de seguridad</span>
+      <div class="row2"><button type="button" class="ghost" id="bkSave">Guardar copia</button><button type="button" class="ghost" id="bkLoad">Recuperar copia</button></div>
+      <input type="file" id="bkFile" accept=".json,application/json,text/plain" hidden>
+      <p class="muted note" id="bkNote">Guárdala en tus archivos o mándatela por WhatsApp. Si cambias de móvil, la recuperas aquí.</p></div>
     <button type="button" class="ghost" id="copyDay">Copiar mi horario de hoy</button>
     <textarea class="fb" id="fbDay" hidden readonly aria-label="Tu horario en texto"></textarea>
     <p class="muted" style="font-size:15px">Horario orientativo. Si tomas medicación, sigue siempre las indicaciones de tu médico.</p>
@@ -448,6 +457,22 @@ let dayText="";
 let LOG=st("mdt-log")||{};
 const ICON={"Me despierto":"⏰","Mi pastilla":"💊","Sol de la mañana":"☀️","Grounding":"🦶","Mi primer café":"☕","Desayuno":"🍳","Comida":"🍽️","Mi comida del día":"🍽️","Día de ayuno":"💧","Caminar":"🚶‍♀️","Fuerza":"💪","Cena":"🥗","Luces rojas o gafas rojas":"🕯️","Magnesio":"🌙","A la cama":"😴"};
 const ic=t=>ICON[t]||"•";
+const WHY={"Me despierto":"Durante la noche se acumulan bacterias en la boca y la lengua, y llevas horas sin beber. El agua con una pizca de sal te hidrata y te repone minerales.",
+"Mi pastilla":"Tómala como te haya indicado tu médico. Separarla del café y de la comida ayuda a que se absorba bien.",
+"Sol de la mañana":"La luz de la mañana pone en hora tu reloj interno: te da energía de día y te ayuda a dormir mejor por la noche. Sin gafas de sol, para que la luz llegue a tus ojos.",
+"Grounding":"Pisar descalza la tierra, el césped o la arena te relaja y te ayuda a bajar el estrés. Si lo haces al sol, sumas las dos cosas.",
+"Mi primer café":"Al despertar tu cuerpo ya se activa solo. Si esperas un poco, el café te sienta mejor y no te da bajón a media mañana. Si tomas pastilla, se separa más para no quitarle efecto.",
+"Desayuno":"Empezar con proteína y grasa te da una energía estable y evita el hambre y las ganas de dulce a media mañana.",
+"Comida":"A mediodía, con el sol alto, digieres mejor. Por eso es el mejor momento para la comida más grande del día.",
+"Mi comida del día":"A mediodía, con el sol alto, digieres mejor. Si haces una sola comida, que sea completa y hasta quedarte saciada.",
+"Día de ayuno":"Un día de descanso digestivo da tiempo a tu cuerpo para repararse. Si te encuentras mal, come algo: es una herramienta, no un reto.",
+"Caminar":"Caminar después de comer ayuda a tu cuerpo a usar el azúcar de la comida y a hacer mejor la digestión.",
+"Fuerza":"A partir de los 40 se pierde músculo cada año. Mantenerlo te ayuda con el metabolismo, los huesos y la energía.",
+"Cena":"Si cenas pronto, cuando te vas a dormir la digestión ya está hecha y tu cuerpo se dedica a descansar y repararse.",
+"Luces rojas o gafas rojas":"La luz blanca de bombillas y pantallas le dice a tu cuerpo que aún es de día y le cuesta prepararse para dormir. La luz roja no le molesta.",
+"Magnesio":"El magnesio ayuda a relajar los músculos y el sistema nervioso, y mucha gente nota que duerme mejor.",
+"A la cama":"Mientras duermes tu cuerpo se repara. Acostarte siempre a la misma hora lo hace mucho más fácil."};
+const whyOpen=new Set();
 const dk=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const dAgo=n=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-n);return d};
 const getL=k=>LOG[k]||(LOG[k]={d:[]});
@@ -455,17 +480,11 @@ const saveLog=()=>st("mdt-log",LOG);
 const FACES={e:[["😩","Poca"],["😐","Normal"],["😊","Mucha"]],s:[["😩","Mal"],["😐","Normal"],["😊","Excelente"]],h:[["😣","Bastante"],["😐","Media"],["😊","Muy baja"]]};
 const QS=[["e","Mi energía"],["s","Cómo dormí"],["h","Hinchazón"]];
 const faceRows=(X,attr)=>QS.map(([q,l])=>`<div class="cirow"><span>${l}</span><div class="faces">${FACES[q].map(([em,w],i)=>`<button type="button" ${attr}="${q}" data-v="${i+1}" aria-pressed="${X[q]===i+1}"><span aria-hidden="true">${em}</span>${w}</button>`).join("")}</div></div>`).join("");
-const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<span class="t">${e.title}<small>${e.text}</small></span><time>${fmt(e.t)}</time></li>`;
+const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<span class="t">${e.title}<small>${e.text}</small>${WHY[e.title]?`<details class="why" data-why="${e.title}"${whyOpen.has(e.title)?" open":""}><summary>¿Por qué?</summary><p>${WHY[e.title]}</p></details>`:""}</span><time>${fmt(e.t)}</time></li>`;
 
-function renderDay(){
-  const [name,lat,lng,tz]=CITIES[sel.value];
-  window.__mdtLoc={lat,lng};
-  const [y,m,d]=todayIn(tz).split("-").map(Number);
+function sched(y,m,d,lat,lng,tz,dow){
   const s=sun(y,m,d,lat,lng);
   const sr=localMin(s.rise,tz),sn=localMin(s.noon,tz),ss=localMin(s.set,tz);
-  const fd=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});
-  $("sunline").textContent=fd.charAt(0).toUpperCase()+fd.slice(1)+(window.__wxStr?" · "+window.__wxStr:"");
-  $("setSum").textContent=`📍 ${name} · ⏰ ${$("wake").value||"07:00"}`;
   const wake=toMin($("wake").value)??420,has=k=>$("h-"+k).checked;
   const pill=$("h-pastilla").checked;
   const bed=wake-480+1440,eat=wake+(pill?150:90),cena=ss-120,light=Math.max(sr,wake);
@@ -475,7 +494,7 @@ function renderDay(){
   if(has("sol"))add(light,"Sol de la mañana","10–15 minutos fuera, sin gafas de sol.");
   if(has("grounding"))add(light+(has("sol")?15:0),"Grounding","10–15 minutos descalza en césped, tierra o arena.");
   if(has("cafe"))add(eat,"Mi primer café",pill?"2 horas y media después de la pastilla.":"Hora y media después de despertar.");
-  const nC=(typeof plan!=="undefined"&&plan[(new Date().getDay()+6)%7])?plan[(new Date().getDay()+6)%7].n:3;
+  const nC=(typeof plan!=="undefined"&&plan[dow])?plan[dow].n:3;
   if(nC===3)add(eat,"Desayuno","Proteína y grasa: huevos, sardinas, carne.");
   if(nC>=1)add(sn,nC===1?"Mi comida del día":"Comida",nC===1?"Tu única comida: completa, con proteína y grasa.":"La comida grande del día, con el sol más alto.");
   if(nC===0)add(sn,"Día de ayuno","Agua, agua con gas e infusiones. Si te encuentras mal, come algo.");
@@ -486,6 +505,16 @@ function renderDay(){
   if(has("magnesio"))add(bed-60,"Magnesio","Una hora antes de dormir.");
   add(bed,"A la cama","Para dormir 8 horas.");
   ev.sort((a,b)=>a.t-b.t);
+  return {ev,sr,sn,ss};
+}
+function renderDay(){
+  const [name,lat,lng,tz]=CITIES[sel.value];
+  window.__mdtLoc={lat,lng};
+  const [y,m,d]=todayIn(tz).split("-").map(Number);
+  const fd=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});
+  $("sunline").textContent=fd.charAt(0).toUpperCase()+fd.slice(1)+(window.__wxStr?" · "+window.__wxStr:"");
+  $("setSum").textContent=`📍 ${name} · ⏰ ${$("wake").value||"07:00"}`;
+  const {ev,sr,sn,ss}=sched(y,m,d,lat,lng,tz,(new Date().getDay()+6)%7);
   const nowM=localMin(Date.now(),tz);
   const L=getL(dk());
   const tasks=ev.filter(e=>e.title!=="Me despierto");
@@ -527,6 +556,35 @@ $("checkin").addEventListener("click",e=>{
   if(X.e&&X.s&&X.h)ciEdit=false;renderDay();
 });
 ["city","wake","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
+document.addEventListener("click",e=>{const sm=e.target.closest(".why summary");if(!sm)return;const t=sm.parentElement.dataset.why;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t)});
+function saveFile(name,type,text,onOk){
+  const blob=new Blob([text],{type});
+  try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})&&type!=="text/calendar"){navigator.share({files:[f],title:name}).then(onOk,()=>{});return}}catch(e){}
+  const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);onOk&&onOk();
+}
+$("icsBtn").addEventListener("click",()=>{
+  const [name,lat,lng,tz]=CITIES[sel.value];const [y,m,d]=todayIn(tz).split("-").map(Number);
+  const {ev}=sched(y,m,d,lat,lng,tz,(new Date().getDay()+6)%7);
+  const p=n=>String(n).padStart(2,"0"),esc=t=>t.replace(/[\\,;]/g,x=>"\\"+x);
+  const out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Mi Dia Tiroideo//ES","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+  const stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
+  ev.filter(e=>e.title!=="Me despierto").forEach((e,i)=>{
+    const t=Math.round(e.t),dt=new Date(Date.UTC(y,m-1,d)+Math.floor(t/1440)*864e5),mm=((t%1440)+1440)%1440;
+    const ds=`${dt.getUTCFullYear()}${p(dt.getUTCMonth()+1)}${p(dt.getUTCDate())}T${p(Math.floor(mm/60))}${p(mm%60)}00`;
+    out.push("BEGIN:VEVENT",`UID:mdt-${i}-${ds}@mi-dia-tiroideo`,`DTSTAMP:${stamp}`,`DTSTART:${ds}`,"DURATION:PT10M","RRULE:FREQ=DAILY;COUNT=30",
+      `SUMMARY:${esc(ic(e.title)+" "+e.title)}`,`DESCRIPTION:${esc(e.text)}`,"BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${esc(e.title)}`,"TRIGGER:PT0S","END:VALARM","END:VEVENT")});
+  out.push("END:VCALENDAR");
+  saveFile("mis-avisos-mi-dia.ics","text/calendar",out.join("\r\n"),()=>{$("icsBtn").textContent="Avisos listos ✓";setTimeout(()=>$("icsBtn").textContent="Poner mis avisos en el calendario",2500)});
+});
+$("bkSave").addEventListener("click",()=>{
+  const o={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("mdt-"))o[k]=localStorage.getItem(k)}}catch(e){}
+  const dd=new Date().toISOString().slice(0,10);
+  saveFile(`copia-mi-dia-${dd}.json`,"application/json",JSON.stringify({app:"mi-dia-tiroideo",v:1,fecha:dd,datos:o}),()=>{$("bkNote").textContent="Copia guardada ✓ Guárdala en un sitio seguro."});
+});
+$("bkLoad").addEventListener("click",()=>$("bkFile").click());
+$("bkFile").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const j=JSON.parse(r.result);if(j.app!=="mi-dia-tiroideo"||!j.datos)throw 0;Object.entries(j.datos).forEach(([k,v])=>{if(k.startsWith("mdt-"))localStorage.setItem(k,v)});$("bkNote").textContent="Copia recuperada ✓";setTimeout(()=>location.reload(),900)}catch(x){$("bkNote").textContent="Ese archivo no es una copia de Mi Día. Prueba con otro."}};
+  r.readAsText(f);e.target.value=""});
 $("copyDay").addEventListener("click",e=>copy(dayText,e.currentTarget,"fbDay","Copiar mi horario de hoy"));
 
 /* ---------- SEMANA ---------- */
