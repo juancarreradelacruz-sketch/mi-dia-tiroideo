@@ -77,6 +77,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .why{margin-top:6px;display:inline-block;width:100%;text-decoration:none}.why summary{display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:15px;font-weight:600;color:var(--gold);list-style:none;min-height:32px}.why summary::-webkit-details-marker{display:none}.why summary::before{content:"💡"}.why p{margin:4px 0 2px;font-size:15px;line-height:1.45;color:var(--muted);font-weight:400}
 .wdays{gap:6px;flex-wrap:nowrap}.wdays .chip{flex:1;min-width:0}.wdays .chip span{width:100%;min-width:0;justify-content:center;padding:8px 0}
 .wtag{display:inline-block;margin-left:6px;font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
+.resetb{color:var(--danger);border-color:var(--danger)!important}.resetb.sure{background:var(--danger);color:var(--surface)}
 .setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
@@ -430,6 +431,9 @@ button:active,.meal:active{transform:scale(.97)}
       <div class="row2"><button type="button" class="ghost" id="bkSave">Guardar copia</button><button type="button" class="ghost" id="bkLoad">Recuperar copia</button></div>
       <input type="file" id="bkFile" accept=".json,application/json,text/plain" hidden>
       <p class="muted note" id="bkNote">Guárdala en tus archivos o mándatela por WhatsApp. Si cambias de móvil, la recuperas aquí.</p></div>
+    <div class="setgrp"><span style="font-weight:600">🔄 Empezar de cero</span>
+      <button type="button" class="ghost resetb" id="resetAll">Borrar todo y empezar de cero</button>
+      <p class="muted note">Borra tus hábitos marcados, platos, notas, jardín y ajustes. Si quieres conservarlos, guarda antes una copia.</p></div>
     <button type="button" class="ghost" id="copyDay">Copiar mi horario de hoy</button>
     <textarea class="fb" id="fbDay" hidden readonly aria-label="Tu horario en texto"></textarea>
     <p class="muted" style="font-size:15px">Horario orientativo. Si tomas medicación, sigue siempre las indicaciones de tu médico.</p>
@@ -717,6 +721,10 @@ $("bkSave").addEventListener("click",()=>{
   const dd=new Date().toISOString().slice(0,10);
   saveFile(`copia-mi-dia-${dd}.json`,"application/json",JSON.stringify({app:"mi-dia-tiroideo",v:1,fecha:dd,datos:o}),()=>{$("bkNote").textContent="Copia guardada ✓ Guárdala en un sitio seguro."});
 });
+{let rT=null;$("resetAll").addEventListener("click",e=>{const b=e.currentTarget;
+  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="¿Seguro? Toca otra vez para borrar";clearTimeout(rT);rT=setTimeout(()=>{b.classList.remove("sure");b.textContent="Borrar todo y empezar de cero"},4000);return}
+  try{Object.keys(localStorage).filter(k=>k.startsWith("mdt-")).forEach(k=>localStorage.removeItem(k))}catch(x){}
+  b.textContent="Borrado ✓";setTimeout(()=>location.reload(),600)})}
 $("bkLoad").addEventListener("click",()=>$("bkFile").click());
 $("bkFile").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const j=JSON.parse(r.result);if(j.app!=="mi-dia-tiroideo"||!j.datos)throw 0;Object.entries(j.datos).forEach(([k,v])=>{if(k.startsWith("mdt-"))localStorage.setItem(k,v)});$("bkNote").textContent="Copia recuperada ✓";setTimeout(()=>location.reload(),900)}catch(x){$("bkNote").textContent="Ese archivo no es una copia de Mi Día. Prueba con otro."}};
