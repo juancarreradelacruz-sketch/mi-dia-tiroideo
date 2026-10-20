@@ -415,7 +415,8 @@ button:active,.meal:active{transform:scale(.97)}
         <span style="font-weight:600">Qué días trabajo</span>
         <div class="chips wdays" id="wDays"></div>
         <div class="row2"><label class="f">Entro a las<input type="time" id="wFrom" value="08:00"></label><label class="f">Salgo a las<input type="time" id="wTo" value="15:00"></label></div>
-        <label class="f">☕ Mi descanso es a las <span class="muted" style="font-weight:400;font-size:15px">(si no tienes, déjalo vacío)</span><input type="time" id="wBrk"></label>
+        <span style="font-weight:600">☕ Mi descanso <span class="muted" style="font-weight:400;font-size:15px">(si no tienes, déjalo vacío)</span></span>
+        <div class="row2" style="margin-top:-4px"><label class="f">Empieza<input type="time" id="wBrk"></label><label class="f">Termina<input type="time" id="wBrkT"></label></div>
         <p class="muted note">Las comidas, el sol y el paseo que caigan en tu horario de trabajo se mueven a tu descanso o a antes o después del trabajo.</p>
       </div>
     </div>
@@ -515,7 +516,7 @@ try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f
   if(!saved||saved.gps)idx=GPS_I;
   sel.value=idx;
   setTimeout(wSync,0);
-  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(saved.w){$("wOn").checked=!!saved.w.on;if(saved.w.from)$("wFrom").value=saved.w.from;if(saved.w.to)$("wTo").value=saved.w.to;$("wBrk").value=saved.w.brk||"";if(Array.isArray(saved.w.days))for(let i=0;i<7;i++)$("wd-"+i).checked=saved.w.days.includes(i)}if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
+  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(saved.w){$("wOn").checked=!!saved.w.on;if(saved.w.from)$("wFrom").value=saved.w.from;if(saved.w.to)$("wTo").value=saved.w.to;$("wBrk").value=saved.w.brk||"";$("wBrkT").value=saved.w.brkT||(saved.w.brk?fmt(toMin(saved.w.brk)+30):"");if(Array.isArray(saved.w.days))for(let i=0;i<7;i++)$("wd-"+i).checked=saved.w.days.includes(i)}if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
 })();
 function locate(){
   const fail=()=>{if(!st("mdt-gps")&&+sel.value===GPS_I){sel.value=tzIdx;saveSet();renderDay();window.__wxGet&&window.__wxGet()}};
@@ -526,7 +527,7 @@ function locate(){
     fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`).then(r=>r.json()).then(j=>{const n=j.city||j.locality||j.principalSubdivision;if(n){c[0]=n;$("optGps").textContent="📍 "+n+" (automática)";st("mdt-gps",{lat,lng,name:n});renderDay()}}).catch(()=>{});
   },fail,{timeout:15000,maximumAge:3600000});
 }
-function saveSet(){st("mdt-set",{w:{on:$("wOn").checked,from:$("wFrom").value,to:$("wTo").value,brk:$("wBrk").value,days:[0,1,2,3,4,5,6].filter(i=>$("wd-"+i).checked)},nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
+function saveSet(){st("mdt-set",{w:{on:$("wOn").checked,from:$("wFrom").value,to:$("wTo").value,brk:$("wBrk").value,brkT:$("wBrkT").value,days:[0,1,2,3,4,5,6].filter(i=>$("wd-"+i).checked)},nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
 $("wOn").addEventListener("change",wSync);
 $("openSet").addEventListener("click",()=>openS("setSheet","setClose"));
 $("setClose").addEventListener("click",()=>{saveSet();closeS("setSheet")});
@@ -584,18 +585,19 @@ function sched(y,m,d,lat,lng,tz,dow){
   if(has("magnesio"))add(bed-60,"Magnesio","Una hora antes de dormir.");
   add(bed,"A la cama","Para dormir 8 horas.");
   if($("wOn").checked&&$("wd-"+dow).checked){
-    const ws=toMin($("wFrom").value),we=toMin($("wTo").value),bk=toMin($("wBrk").value);
+    const ws=toMin($("wFrom").value),we=toMin($("wTo").value),bk0=toMin($("wBrk").value);let bkE=toMin($("wBrkT").value);
+    const bk=bk0!=null&&bk0>=ws&&bk0<we?bk0:null;if(bk!=null&&(bkE==null||bkE<=bk))bkE=bk+30;const bLen=bk!=null?bkE-bk:0;
     if(ws!=null&&we!=null&&we>ws){
       const inW=t=>t>=ws&&t<we,FOOD=["Desayuno","Comida","Mi comida del día"],OUT=["Sol de la mañana","Grounding"],AFTER=["Caminar","Fuerza","Cena"];
       let brkUsed=false;const mark=(e,t,why)=>{e.t=t;e.text=e.text+" "+why;e.moved=true};
       ev.slice().sort((a,b)=>a.t-b.t).forEach(e=>{if(!inW(e.t))return;
         if(FOOD.includes(e.title)){
-          if(bk!=null&&inW(bk)&&!brkUsed){brkUsed=true;mark(e,bk,"Movida a tu descanso.")}
+          if(bk!=null&&!brkUsed){brkUsed=true;mark(e,bk+(bLen>=30?10:0),"Movida a tu descanso"+(bLen>=30?": si puedes, cómela al sol.":"."))}
           else if(e.t<(ws+we)/2&&ws-30>=wake+20)mark(e,ws-30,"Antes de entrar a trabajar.");
           else mark(e,we+15,"Al salir del trabajo.")}
         else if(OUT.includes(e.title)){
           if(ws-25>=Math.max(sr,wake))mark(e,ws-25-(e.title==="Grounding"?0:15),"Antes de entrar a trabajar.");
-          else if(bk!=null&&inW(bk))mark(e,bk+(e.title==="Grounding"?15:0),"En tu descanso, si puedes salir fuera.");
+          else if(bk!=null&&(e.title!=="Grounding"||bLen>=30))mark(e,e.title==="Grounding"?bk+Math.min(20,bLen-10):bk,"En tu descanso, si puedes salir fuera.");
           else mark(e,we+10,"Al salir del trabajo.")}
         else if(AFTER.includes(e.title))mark(e,we+(e.title==="Cena"?20:e.title==="Fuerza"?60:15),"Al salir del trabajo.");
       });
@@ -683,7 +685,7 @@ $("checkin").addEventListener("click",e=>{
   const X=getL($("checkin").dataset.k);X[b.dataset.q]=+b.dataset.v;saveLog();
   if(X.e&&X.s&&X.h)ciEdit=false;renderDay();
 });
-["city","wake","uname","wOn","wFrom","wTo","wBrk","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
+["city","wake","uname","wOn","wFrom","wTo","wBrk","wBrkT","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
 document.addEventListener("click",e=>{const sm=e.target.closest(".why summary");if(!sm)return;const t=sm.parentElement.dataset.why;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t)});
 function saveFile(name,type,text,onOk){
   const blob=new Blob([text],{type});
