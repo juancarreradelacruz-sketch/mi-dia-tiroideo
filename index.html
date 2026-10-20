@@ -395,6 +395,10 @@ const OLD_C=["Madrid", "Barcelona", "Valencia", "Sevilla", "Cádiz", "Málaga", 
 const sel=$("city");
 let ci=0;GROUPS_C.forEach(([g,cs])=>{const og=document.createElement("optgroup");og.label=g;cs.forEach(c=>{const o=document.createElement("option");o.value=ci++;o.textContent=c[0];og.appendChild(o)});sel.appendChild(og)});
 const byName=n=>CITIES.findIndex(c=>c[0]===n);
+const GPS_I=CITIES.length,gpsSaved=st("mdt-gps");
+const devTz=(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||"Europe/Madrid"}catch(e){return "Europe/Madrid"}})();
+CITIES.push([gpsSaved&&gpsSaved.name||"Mi ubicación",gpsSaved?gpsSaved.lat:40.417,gpsSaved?gpsSaved.lng:-3.704,devTz]);
+{const o=document.createElement("option");o.value=GPS_I;o.id="optGps";o.textContent="📍 "+(gpsSaved&&gpsSaved.name?gpsSaved.name+" (automática)":"Mi ubicación (automática)");sel.insertBefore(o,sel.firstChild)}
 const DEF={"Europe/Madrid":"Madrid","Atlantic/Canary":"Las Palmas de Gran Canaria","America/Mexico_City":"Ciudad de México","America/Argentina/Buenos_Aires":"Buenos Aires","America/Buenos_Aires":"Buenos Aires","America/Cordoba":"Córdoba (Argentina)","America/Mendoza":"Mendoza","America/Santiago":"Santiago de Chile","America/Lima":"Lima","America/Bogota":"Bogotá","America/Caracas":"Caracas","America/New_York":"Nueva York","America/Guayaquil":"Quito","America/La_Paz":"La Paz","America/Santo_Domingo":"Santo Domingo","Europe/Berlin":"Berlín"};
 const HAB=[["cafe","☕ Café"],["sol","☀️ Sol"],["grounding","🦶 Grounding"],["caminar","🚶‍♀️ Caminar"],["fuerza","💪 Fuerza"],["magnesio","🌙 Magnesio"]];
 $("habits").innerHTML=`<label class="chip"><input type="checkbox" id="h-pastilla" checked><span>💊 Tomo pastilla</span></label>`+HAB.map(([k,l])=>`<label class="chip"><input type="checkbox" id="h-${k}" checked><span>${l}</span></label>`).join("");
@@ -415,16 +419,28 @@ function localMin(ms,tz){const p=new Intl.DateTimeFormat("es-ES",{timeZone:tz,ho
 const todayIn=tz=>new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 
 const saved=st("mdt-set");
+let tzIdx=byName("Madrid");
+try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f>=0&&f!==GPS_I)tzIdx=f}catch(e){}
 (function init(){
   let idx=byName("Madrid");
   let nm=saved&&(saved.name||(OLD_C[+saved.city]==="Cádiz"?"San Fernando":OLD_C[+saved.city])||null);
   if(nm==="Las Palmas")nm="Las Palmas de Gran Canaria";if(nm==="Tenerife")nm="Santa Cruz de Tenerife";if(nm==="Palma")nm="Palma de Mallorca";if(nm==="Guatemala")nm="Ciudad de Guatemala";
   if(nm&&byName(nm)>=0)idx=byName(nm);
   else{try{const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;const f=DEF[tz]?byName(DEF[tz]):CITIES.findIndex(c=>c[3]===tz);if(f>=0)idx=f}catch(e){}}
+  if(!saved||saved.gps)idx=GPS_I;
   sel.value=idx;
   if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
 })();
-function saveSet(){st("mdt-set",{name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
+function locate(){
+  const fail=()=>{if(!st("mdt-gps")&&+sel.value===GPS_I){sel.value=tzIdx;saveSet();renderDay();window.__wxGet&&window.__wxGet()}};
+  if(!navigator.geolocation)return fail();
+  navigator.geolocation.getCurrentPosition(p=>{
+    const lat=+p.coords.latitude.toFixed(3),lng=+p.coords.longitude.toFixed(3),c=CITIES[GPS_I];
+    c[1]=lat;c[2]=lng;st("mdt-gps",{lat,lng,name:c[0]==="Mi ubicación"?"":c[0]});renderDay();window.__wxGet&&window.__wxGet(true);
+    fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`).then(r=>r.json()).then(j=>{const n=j.city||j.locality||j.principalSubdivision;if(n){c[0]=n;$("optGps").textContent="📍 "+n+" (automática)";st("mdt-gps",{lat,lng,name:n});renderDay()}}).catch(()=>{});
+  },fail,{timeout:15000,maximumAge:3600000});
+}
+function saveSet(){st("mdt-set",{gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
 $("openSet").addEventListener("click",()=>openS("setSheet","setClose"));
 $("setClose").addEventListener("click",()=>{saveSet();closeS("setSheet")});
 
@@ -448,7 +464,7 @@ function renderDay(){
   const s=sun(y,m,d,lat,lng);
   const sr=localMin(s.rise,tz),sn=localMin(s.noon,tz),ss=localMin(s.set,tz);
   const fd=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});
-  $("sunline").textContent=fd.charAt(0).toUpperCase()+fd.slice(1);
+  $("sunline").textContent=fd.charAt(0).toUpperCase()+fd.slice(1)+(window.__wxStr?" · "+window.__wxStr:"");
   $("setSum").textContent=`📍 ${name} · ⏰ ${$("wake").value||"07:00"}`;
   const wake=toMin($("wake").value)??420,has=k=>$("h-"+k).checked;
   const pill=$("h-pastilla").checked;
@@ -510,7 +526,7 @@ $("checkin").addEventListener("click",e=>{
   const X=getL($("checkin").dataset.k);X[b.dataset.q]=+b.dataset.v;saveLog();
   if(X.e&&X.s&&X.h)ciEdit=false;renderDay();
 });
-["city","wake","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay()}));
+["city","wake","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
 $("copyDay").addEventListener("click",e=>copy(dayText,e.currentTarget,"fbDay","Copiar mi horario de hoy"));
 
 /* ---------- SEMANA ---------- */
@@ -666,7 +682,7 @@ $("feelToday").addEventListener("click",e=>{const b=e.target.closest("[data-pq]"
 $("copyProg").addEventListener("click",e=>copy(summary(),e.currentTarget,"fbProg","Enviar mi semana a Juan"));
 
 /* ---------- Arranque ---------- */
-renderDay();renderWeek();
+renderDay();renderWeek();if(+sel.value===GPS_I)locate();
 const h=location.hash.replace("#","");
 show(VIEWS.includes(h)?h:(st("mdt-view")||"dia"));
 if(!saved)openS("setSheet","setClose");
@@ -729,6 +745,21 @@ const R=[];for(let j=0;j<90;j++)R.push([Math.random(),Math.random()*6.28,0.6+Mat
 const S=[];for(let j=0;j<140;j++)S.push([Math.random(),Math.pow(Math.random(),1.4),Math.random()*6.28,0.4+Math.random()*1.3]);
 function size(){dpr=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
 const rd=Math.PI/180;
+const CL=[];for(let j=0;j<9;j++)CL.push([Math.random(),0.12+Math.random()*0.5,0.7+Math.random()*0.8,(0.004+Math.random()*0.008)*(Math.random()<.5?1:-1),Math.random()*6.28]);
+const RN=[];for(let j=0;j<160;j++)RN.push([Math.random(),Math.random(),0.7+Math.random()*0.6]);
+let WX=null;const qwx=new URLSearchParams(location.search).get("wx");
+if(qwx!==null)WX={code:+qwx,cloud:+qwx>=3?100:+qwx*30,temp:18,key:"test",at:Date.now()+1e12};
+const wxEmoji=(c,day)=>c===0?(day?"☀️":"🌙"):c<=2?(day?"🌤️":"☁️"):c===3?"☁️":c<=48?"🌫️":c<=67||(c>=80&&c<=82)?"🌧️":c<=86?"❄️":"⛈️";
+function showWx(){if(!WX)return;const loc=window.__mdtLoc||{lat:40.4,lng:-3.7};const day=sunPos(Date.now(),loc.lat,loc.lng).alt>-0.8;
+  window.__wxStr=wxEmoji(WX.code,day)+" "+WX.temp+"°";const el=document.getElementById("sunline");if(el)el.textContent=el.textContent.split(" · ")[0]+" · "+window.__wxStr}
+function wxGet(force){
+  const loc=window.__mdtLoc;if(!loc||qwx!==null)return;
+  const key=loc.lat.toFixed(2)+","+loc.lng.toFixed(2);
+  if(!force&&WX&&WX.key===key&&Date.now()-WX.at<1500000)return;
+  fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,weather_code,cloud_cover&timezone=auto`).then(r=>r.json()).then(j=>{const c=j.current;if(!c)return;WX={key,at:Date.now(),code:c.weather_code,cloud:c.cloud_cover,temp:Math.round(c.temperature_2m)};showWx()}).catch(()=>{});
+}
+window.__wxGet=wxGet;setTimeout(()=>{wxGet();showWx()},400);setInterval(wxGet,600000);
+function cloud(x,y,s,col,a){ctx.fillStyle=`rgba(${col},${a})`;[[0,0,1],[-.9,.25,.7],[.9,.25,.75],[-.4,-.35,.7],[.45,-.3,.65],[0,.35,.9]].forEach(([dx,dy,r])=>{ctx.beginPath();ctx.ellipse(x+dx*s*34,y+dy*s*20,r*s*36,r*s*22,0,0,6.2832);ctx.fill()})}
 function sunPos(ms,lat,lng){
   const d=ms/864e5-10957.5,M=rd*(357.5291+0.98560028*d);
   const C=rd*(1.9148*Math.sin(M)+0.02*Math.sin(2*M)+0.0003*Math.sin(3*M));
@@ -760,11 +791,14 @@ function draw(t){
   const now=Date.now(),sp0=sunPos(now,loc.lat,loc.lng),alt=sp0.alt,ha=sp0.ha;
   const hor=Math.min(H*0.24,192);
   const [cTop,cMid,cHor,sTop,sBot,_g,glowRGB]=pal(alt);
+  const wc=WX?WX.code:0,fog=wc===45||wc===48,cov=WX?clamp(Math.max(WX.cloud/100,fog?0.7:0,wc>=51?0.9:0),0,1):0;
+  const rainy=(wc>=51&&wc<=67)||(wc>=80&&wc<=82)||wc>=95,snowy=(wc>=71&&wc<=77)||wc===85||wc===86;
   let g=ctx.createLinearGradient(0,0,0,hor);g.addColorStop(0,cTop);g.addColorStop(.55,cMid);g.addColorStop(1,cHor);
   ctx.fillStyle=g;ctx.fillRect(0,0,W,hor+1);
+  if(cov>0){ctx.fillStyle=alt>-4?`rgba(132,140,156,${(cov*cov*0.6).toFixed(3)})`:`rgba(22,26,38,${(cov*0.55).toFixed(3)})`;ctx.fillRect(0,0,W,hor+1)}
   // estrellas
   const night=clamp((-alt-3)/9,0,1);
-  if(night>0){for(const [x,y,ph,sp] of S){const a=night*(0.35+0.65*(0.5+0.5*Math.sin(t*sp+ph)))*(1-y*0.6);ctx.fillStyle=`rgba(255,255,240,${a.toFixed(3)})`;const r=0.6+sp*0.5;ctx.fillRect(x*W,y*hor*0.95,r,r)}}
+  if(night>0){for(const [x,y,ph,sp] of S){const a=night*(1-cov)*(0.35+0.65*(0.5+0.5*Math.sin(t*sp+ph)))*(1-y*0.6);ctx.fillStyle=`rgba(255,255,240,${a.toFixed(3)})`;const r=0.6+sp*0.5;ctx.fillRect(x*W,y*hor*0.95,r,r)}}
   const r=Math.min(W,H)*0.07;
   // sol
   let refX=null,refC=null,refA=0;
@@ -775,8 +809,8 @@ function draw(t){
     ctx.fillStyle=gw;ctx.fillRect(0,0,W,hor);
     const sg=ctx.createRadialGradient(sx,syc-r*.3,r*.1,sx,syc,r);
     sg.addColorStop(0,"#fffbea");sg.addColorStop(1,alt>15?"#fff1b8":"#ffb057");
-    ctx.save();ctx.beginPath();ctx.rect(0,0,W,hor);ctx.clip();ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sx,syc,r,0,6.2832);ctx.fill();ctx.restore();
-    refX=sx;refC=glowRGB;refA=clamp((alt+6)/8,0,1)*(alt>20?0.55:1);
+    ctx.save();ctx.globalAlpha=1-cov*0.85;ctx.beginPath();ctx.rect(0,0,W,hor);ctx.clip();ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sx,syc,r,0,6.2832);ctx.fill();ctx.restore();
+    refX=sx;refC=glowRGB;refA=clamp((alt+6)/8,0,1)*(alt>20?0.55:1)*(1-cov*0.85);
   }
   // luna
   const age=(((now-947182440000)/864e5)%29.530588+29.530588)%29.530588,k=age/29.530588,f=(1-Math.cos(2*Math.PI*k))/2;
@@ -784,7 +818,7 @@ function draw(t){
   if(alt<-2&&mAlt>0){
     const mx=W*(0.5+clamp(mha/180,-0.5,0.5)*0.9),mr=r*0.75,my=hor-clamp(mAlt/60,0,1)*(hor-mr-36)+mr*0.2;
     const ma=clamp((-alt-2)/6,0,1)*clamp(mAlt/6,0,1);
-    ctx.save();ctx.globalAlpha=ma;
+    ctx.save();ctx.globalAlpha=ma*(1-cov*0.85);
     const mg=ctx.createRadialGradient(mx,my,mr*.5,mx,my,mr*4);mg.addColorStop(0,"rgba(220,230,255,.25)");mg.addColorStop(1,"rgba(220,230,255,0)");ctx.fillStyle=mg;ctx.fillRect(0,0,W,hor);
     ctx.beginPath();ctx.arc(mx,my,mr,0,6.2832);ctx.clip();
     ctx.fillStyle="#f3f1e6";ctx.fillRect(mx-mr,my-mr,mr*2,mr*2);
@@ -792,8 +826,14 @@ function draw(t){
     ctx.fillStyle=cTop.replace("rgb","rgba").replace(")",",.93)");
     ctx.beginPath();ctx.arc(mx+(k<0.5?-1:1)*2*mr*f,my,mr*1.02,0,6.2832);ctx.fill();
     ctx.restore();
-    if(!refX||refA<ma){refX=mx;refC=[220,228,255];refA=ma*clamp(f+0.25,0,1)}
+    if(!refX||refA<ma){refX=mx;refC=[220,228,255];refA=ma*clamp(f+0.25,0,1)*(1-cov*0.85)}
   }
+  // nubes
+  const nCl=Math.round(cov*CL.length);
+  if(nCl>0){const col=alt>8?(cov>0.7?"196,201,212":"252,252,255"):alt>-4?"240,178,156":"52,60,88";
+    ctx.save();ctx.beginPath();ctx.rect(0,0,W,hor);ctx.clip();
+    for(let i=0;i<nCl;i++){const [x0,y0,sc,sp,ph]=CL[i];const s=sc*Math.min(1.2,W/420);let x=((x0+t*sp)%1+1)%1;x=x*(W+240*s)-120*s;cloud(x,hor*y0,s,col,0.55+cov*0.35)}
+    ctx.restore()}
   // mar
   let sea=ctx.createLinearGradient(0,hor,0,H);sea.addColorStop(0,sTop);sea.addColorStop(1,sBot);
   ctx.fillStyle=sea;ctx.fillRect(0,hor,W,H-hor);
@@ -805,10 +845,16 @@ function draw(t){
     ctx.strokeStyle=`rgba(${lt},${(0.06+0.14*(1-p))*(night?0.6:1)})`;ctx.lineWidth=0.6+p*1.6;ctx.stroke();
     ctx.lineTo(W+10,y+amp*2+4);ctx.lineTo(-10,y+amp*2+4);ctx.closePath();ctx.fillStyle=`rgba(5,10,30,${0.05+p*0.05})`;ctx.fill();
   }
+  if(cov>0){ctx.fillStyle=`rgba(60,68,84,${(cov*0.3).toFixed(3)})`;ctx.fillRect(0,hor,W,H-hor)}
+  if(fog){const fg=ctx.createLinearGradient(0,hor*0.3,0,hor+(H-hor)*0.4);fg.addColorStop(0,"rgba(220,224,230,0)");fg.addColorStop(.5,"rgba(220,224,230,.55)");fg.addColorStop(1,"rgba(220,224,230,0)");ctx.fillStyle=fg;ctx.fillRect(0,0,W,H)}
   if(refX!==null&&refA>0){for(const [p0,ph,sp] of R){
     const p=Math.pow(p0,1.3),y=hor+2+(H-hor)*p,fl=0.5+0.5*Math.sin(t*2.2*sp+ph),w=(6+p*W*0.26)*(0.35+0.65*fl),x=refX-w/2+Math.sin(t*0.7+ph)*(4+p*26);
     ctx.fillStyle=`rgba(${refC.join(",")},${(((1-p)*0.55*fl+0.04)*refA).toFixed(3)})`;ctx.fillRect(x,y,w,0.8+p*2.6);
   }}
+  if(rainy){ctx.strokeStyle=alt>-4?"rgba(225,232,245,.38)":"rgba(170,185,215,.3)";ctx.lineWidth=1;ctx.beginPath();
+    for(const [x0,y0,v] of RN){const y=((y0+t*0.9*v)%1)*(H+40)-20,x=((x0-t*0.08*v)%1+1)%1*W;ctx.moveTo(x,y);ctx.lineTo(x-4,y+14*v)}ctx.stroke()}
+  if(snowy){ctx.fillStyle="rgba(255,255,255,.75)";for(const [x0,y0,v] of RN){const y=((y0+t*0.06*v)%1)*H,x=x0*W+Math.sin(t*v+y0*9)*10;ctx.beginPath();ctx.arc(x,y,1+v,0,6.2832);ctx.fill()}}
+  if(wc>=95&&(t%9)<0.12){ctx.fillStyle="rgba(255,255,255,.28)";ctx.fillRect(0,0,W,H)}
 }
 function loop(ts){if(!run)return;if(ts-last>33){last=ts;draw(ts/1000)}requestAnimationFrame(loop)}
 size();draw(0);
