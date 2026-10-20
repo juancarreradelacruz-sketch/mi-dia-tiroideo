@@ -592,18 +592,24 @@ function sched(y,m,d,lat,lng,tz,dow){
       let brkUsed=false;const mark=(e,t,why)=>{e.t=t;e.text=e.text+" "+why;e.moved=true};
       ev.slice().sort((a,b)=>a.t-b.t).forEach(e=>{if(!inW(e.t))return;
         if(FOOD.includes(e.title)){
-          if(bk!=null&&!brkUsed){brkUsed=true;mark(e,bk+(bLen>=30?10:0),"Movida a tu descanso"+(bLen>=30?": si puedes, cómela al sol.":"."))}
-          else if(e.t<(ws+we)/2&&ws-30>=wake+20)mark(e,ws-30,"Antes de entrar a trabajar.");
+          const minB=wake+(pill?60:45);
+          if(bk!=null&&!brkUsed&&bk>=minB){brkUsed=true;mark(e,bk+(bLen>=30?10:0),"Movida a tu descanso"+(bLen>=30?": si puedes, cómela al sol.":"."))}
+          else if(e.t<(ws+we)/2&&ws-30>=minB)mark(e,ws-30,"Antes de entrar a trabajar.");
+          else if(e.title==="Desayuno"&&ev.some(x=>x.title==="Comida")){e.drop=true}
           else mark(e,we+15,"Al salir del trabajo.")}
         else if(OUT.includes(e.title)){
-          if(ws-25>=Math.max(sr,wake))mark(e,ws-25-(e.title==="Grounding"?0:15),"Antes de entrar a trabajar.");
-          else if(bk!=null&&(e.title!=="Grounding"||bLen>=30))mark(e,e.title==="Grounding"?bk+Math.min(20,bLen-10):bk,"En tu descanso, si puedes salir fuera.");
-          else mark(e,we+10,"Al salir del trabajo.")}
+          const g=e.title==="Grounding";
+          if(ws-25>=Math.max(sr,wake)+(g?15:0))mark(e,ws-25-(g?0:15),"Antes de entrar a trabajar.");
+          else if(!g&&bk!=null&&bk>=sr)mark(e,bk,"En tu descanso, si puedes salir fuera.");
+          else mark(e,we+10,g?"Al salir del trabajo, sin prisas.":"Al salir del trabajo.")}
         else if(AFTER.includes(e.title))mark(e,we+(e.title==="Cena"?20:e.title==="Fuerza"?60:15),"Al salir del trabajo.");
       });
+      if(ev.some(e=>e.drop)){for(let i=ev.length-1;i>=0;i--)if(ev[i].drop)ev.splice(i,1);const cm=ev.find(e=>e.title==="Comida");if(cm){cm.text+=" Hoy es tu primera comida del día: que sea completa.";cm.moved=true}}
       const main=ev.find(e=>e.title==="Comida"||e.title==="Mi comida del día"),cw=ev.find(e=>e.title==="Caminar");
       if(main&&cw&&main.moved&&cw.t<main.t+30){cw.t=main.t+30;if(!cw.moved){cw.moved=true;cw.text+=" Después de tu comida."}}
-      const fz=ev.find(e=>e.title==="Fuerza");if(fz&&main&&fz.t<main.t+60){fz.t=main.t+60;if(!fz.moved){fz.moved=true;fz.text+=" Al salir del trabajo."}}
+      const gr=ev.find(e=>e.title==="Grounding");if(gr&&main&&main.moved&&gr.moved&&gr.t>=we&&gr.t<main.t+45)gr.t=main.t+50;
+      const fz=ev.find(e=>e.title==="Fuerza");if(fz&&main&&fz.t<main.t+75){fz.t=main.t+75;if(!fz.moved){fz.moved=true;fz.text+=" Al salir del trabajo."}}
+      const cn=ev.find(e=>e.title==="Cena");if(cn&&main&&cn.t<main.t+150){cn.t=Math.min(main.t+150,ss);if(!cn.moved){cn.moved=true;cn.text="Hoy algo más tarde por tu horario: que sea ligera."}}
     }
   }
   ev.sort((a,b)=>a.t-b.t);
