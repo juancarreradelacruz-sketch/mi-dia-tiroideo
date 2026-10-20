@@ -328,7 +328,7 @@ button:active,.meal:active{transform:scale(.97)}
     <div class="card ci" id="feelToday"></div>
     <button type="button" id="copyProg">💬 Enviar mi semana a Juan</button>
     <p class="oncanvas" style="font-size:16px;margin-top:-6px;text-align:center">Se abre WhatsApp con tu resumen ya escrito. Solo dale a enviar.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button type="button" class="ghost" id="waAlt" style="min-width:0">Al otro número</button><button type="button" class="ghost" id="copyOnly" style="min-width:0">Solo copiar</button></div>
+    <button type="button" class="ghost" id="copyOnly">Solo copiar</button>
     <textarea class="fb" id="fbProg" hidden readonly aria-label="Resumen en texto"></textarea>
   </div></div>
 </section>
@@ -738,10 +738,9 @@ function summary(){
   return ln.join("\n");
 }
 $("feelToday").addEventListener("click",e=>{const b=e.target.closest("[data-pq]");if(!b)return;const X=getL(dk());X[b.dataset.pq]=+b.dataset.v;saveLog();renderProg();renderDay()});
-const WA=["34622410827","34640548148"];
+const WA=["34622410827"];
 const wa=n=>{const u=`https://wa.me/${n}?text=${encodeURIComponent(summary())}`;const w=window.open(u,"_blank");if(!w)location.href=u};
 $("copyProg").addEventListener("click",()=>wa(WA[0]));
-$("waAlt").addEventListener("click",()=>wa(WA[1]));
 $("copyOnly").addEventListener("click",e=>copy(summary(),e.currentTarget,"fbProg","Solo copiar"));
 
 /* ---------- Arranque ---------- */
