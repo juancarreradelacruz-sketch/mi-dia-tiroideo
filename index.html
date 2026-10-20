@@ -252,6 +252,14 @@ button:active,.meal:active{transform:scale(.97)}
 .hrow>div:first-child{min-width:0;flex:1}
 .hero .in>*{min-width:0}
 .hpill{max-width:100%}
+/* Modo noche: tonos rojos después del atardecer */
+:root[data-night]{
+  --bg:#120605; --surface:#1d0a08; --glass:rgba(32,10,8,.88); --line:#3b1712; --fg:#ffbfae; --muted:#d08a76;
+  --green:#d9583f; --on-green:#160605; --green-soft:#36130e; --gold:#ff8f63; --gold-soft:#3a190f; --sun:#ff7a4d;
+  --danger:#ff7a63; --hero:#2b0b08; --hero-fg:#ffc9b8; --hero-soft:rgba(255,190,170,.10); --shadow:0 6px 20px rgba(0,0,0,.45); color-scheme:dark}
+:root[data-night] body{background:var(--bg)}
+:root[data-night] #scene{filter:sepia(1) hue-rotate(-40deg) saturate(2.4) brightness(.72)}
+:root[data-night] img,:root[data-night] .ic,:root[data-night] .big{filter:sepia(.6) saturate(1.4) hue-rotate(-20deg)}
 </style>
 <canvas id="scene" aria-hidden="true"></canvas>
 
@@ -351,6 +359,7 @@ button:active,.meal:active{transform:scale(.97)}
     <label class="f">⏰ Me despierto a las<input type="time" id="wake" value="07:00"></label>
     <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><div class="chips" id="habits"></div></div>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
+    <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
     <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
       <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
       <p class="muted note" id="icsNote">Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada. Renuévalos una vez al mes.</p></div>
@@ -429,6 +438,8 @@ function localMin(ms,tz){const p=new Intl.DateTimeFormat("es-ES",{timeZone:tz,ho
 const todayIn=tz=>new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 
 const saved=st("mdt-set");
+try{$("nightOn").checked=localStorage.getItem("mdt-night")!=="0"}catch(e){}
+$("nightOn").addEventListener("change",()=>{try{localStorage.setItem("mdt-night",$("nightOn").checked?"1":"0")}catch(e){};renderDay()});
 let tzIdx=byName("Madrid");
 try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f>=0&&f!==GPS_I)tzIdx=f}catch(e){}
 (function init(){
@@ -516,6 +527,8 @@ function renderDay(){
   $("sunline").textContent=fd.charAt(0).toUpperCase()+fd.slice(1)+(window.__wxStr?" · "+window.__wxStr:"");
   $("setSum").textContent=`📍 ${name} · ⏰ ${$("wake").value||"07:00"}`;
   const {ev,sr,sn,ss}=sched(y,m,d,lat,lng,tz,(new Date().getDay()+6)%7);
+  {const nm=localMin(Date.now(),tz),nt=$("nightOn").checked&&(nm>=ss||nm<sr);if(nt)document.documentElement.dataset.night="1";else delete document.documentElement.dataset.night;
+   const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content=nt?"#2b0b08":"#23365c"}
   const nowM=localMin(Date.now(),tz);
   const L=getL(dk());
   const tasks=ev.filter(e=>e.title!=="Me despierto");
