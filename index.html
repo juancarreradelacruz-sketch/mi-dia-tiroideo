@@ -620,7 +620,7 @@ function sched(y,m,d,lat,lng,tz,dow){
   if(has("grounding"))add(light+(has("sol")?15:0),"Grounding","10–15 minutos descalza en césped, tierra o arena.");
   if(has("cafe"))add(eat,"Mi primer café",pill?"2 horas y media después de la pastilla.":"Hora y media después de despertar.");
   const nC=(typeof plan!=="undefined"&&plan[dow])?plan[dow].n:3;
-  if(nC===3)add(eat,"Desayuno","Proteína y grasa: huevos, sardinas, carne.");
+  if(nC===3){let dt=has("cafe")?eat+60:eat;if(dt>sn-120)dt=Math.max(eat,sn-150);add(dt,"Desayuno",has("cafe")&&dt>=eat+60?"Proteína y grasa: huevos, sardinas, carne. Una hora después del café.":"Proteína y grasa: huevos, sardinas, carne.")}
   if(nC>=1)add(sn,nC===1?"Mi comida del día":"Comida",nC===1?"Tu única comida: completa, con proteína y grasa.":"La comida grande del día, con el sol más alto.");
   if(nC===0)add(sn,"Día de ayuno","Agua, agua con gas e infusiones. Si te encuentras mal, come algo.");
   if(has("caminar"))add(sn+30,"Caminar",nC===0?"Paseo suave de 15–20 minutos.":"Paseo de 15–20 minutos después de comer.");
