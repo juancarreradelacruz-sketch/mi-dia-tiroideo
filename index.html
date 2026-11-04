@@ -73,7 +73,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .rows{list-style:none;margin:0;padding:0;display:grid}
 .rows li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
 .rows li:last-child{border-bottom:0}
-.rows li.grp{display:block;border:0;padding:14px 0 2px;font-weight:700;color:var(--gold);font-size:16px}
+.rows li.grp{display:flex;align-items:center;gap:10px;border:0;padding:18px 0 6px;font-weight:800;color:var(--gold);font-size:19px;letter-spacing:.2px}
+.rows li.grp::after{content:"";flex:1;height:2px;border-radius:2px;background:var(--gold);opacity:.3}
+.rows li.grp:first-child{padding-top:6px}
 .why{margin-top:6px;display:inline-block;width:100%;text-decoration:none}.why summary{display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:15px;font-weight:600;color:var(--gold);list-style:none;min-height:32px}.why summary::-webkit-details-marker{display:none}.why summary::before{content:"💡"}.why p{margin:4px 0 2px;font-size:15px;line-height:1.45;color:var(--muted);font-weight:400}
 .wdays{gap:6px;flex-wrap:nowrap}.wdays .chip{flex:1;min-width:0}.wdays .chip span{width:100%;min-width:0;justify-content:center;padding:8px 0}
 .wtag{display:inline-block;margin-left:6px;font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
@@ -715,7 +717,7 @@ function renderDay(){
   else if(!cur){const e=ev[0];nowEl.innerHTML=`<div class="top"><div class="big">${ic(e.title)}</div><div><small>Mañana empiezas con</small><h2>${e.title}</h2><span class="time">${fmt(e.t)}</span></div></div>`}
   else nowEl.innerHTML=`<div class="top"><div class="big" aria-hidden="true">${ic(cur.title)}</div><div><small>Ahora toca · ${fmt(cur.t)}</small><h2>${cur.title}</h2></div></div><p>${cur.text}</p><button type="button" data-done="${cur.title}">Hecho ✓</button>`;
   const part=t=>t<12*60?"Mañana":t<16*60?"Mediodía":t<ss?"Tarde":"Noche";let lastP="";
-  $("list").innerHTML=ev.map(e=>{const p=part(e.t),h=p!==lastP?`<li class="grp">${p}</li>`:"";lastP=p;return h+row(e,isDone(e),e.title==="Me despierto")}).join("");
+  $("list").innerHTML=ev.map(e=>{const p=part(e.t),h=p!==lastP?`<li class="grp"><span>${{"Mañana":"🌅","Mediodía":"☀️","Tarde":"🌇","Noche":"🌙"}[p]||""} ${p}</span></li>`:"";lastP=p;return h+row(e,isDone(e),e.title==="Me despierto")}).join("");
   renderCheckin(nowM,ss);
   dayText=`Mi día — ${name}\n\n`+ev.map(e=>`${fmt(e.t)}  ${ic(e.title)} ${e.title}`).join("\n");
 }
