@@ -89,6 +89,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .wiz{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#23365c 0%,#5a3f7d 45%,#f0a070 85%,#fbc56e 100%);transition:opacity .3s}
 .wiz.bye{opacity:0}
 .wcard{background:var(--surface);color:var(--fg);border-radius:28px;padding:26px 22px 22px;width:100%;max-width:400px;display:grid;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.wcard{position:relative}
+.wcard button.wback{position:absolute;top:12px;left:12px;min-height:36px;padding:4px 12px;font-size:15px;font-weight:600;background:transparent;color:var(--muted);border:0;box-shadow:none}
 .wcard h2{margin:0;font-family:var(--display);font-size:26px;line-height:1.2}.wcard p{margin:0;color:var(--muted);font-size:17px;line-height:1.45}
 .wcard label.f{text-align:left}.wem{font-size:52px;line-height:1}
 .wcard button.ok{background:var(--gold-soft);color:var(--fg);border:2px solid var(--gold)}
@@ -978,11 +980,12 @@ function wizard(){
       :`<div class="wem">💪</div><h2>¿Entrenas fuerza?</h2><p>Pesas, gomas o con tu propio peso. Te lo pongo a la hora que mejor te venga${$("wOn").checked?" con tu trabajo":""}.</p><button type="button" data-fz="am">Sí, por la mañana${$("wOn").checked?" (antes de trabajar)":""}</button><button type="button" data-fz="pm">Sí, por la tarde</button><button type="button" class="ghost" data-fz="none">No entreno</button>`,
     ()=>`<div class="wem">🔔</div><h2>¿Te aviso de cada hábito?</h2><p>Te pongo un aviso en el calendario del móvil a la hora de cada hábito: el sol, el café, las comidas, el paseo… Así no se te olvida nada, aunque no abras la app.</p><button type="button" data-ics="1">Sí, avísame</button><button type="button" class="ghost" data-ics="0">Ahora no</button><p style="font-size:14px">Al darle, se abre tu calendario: toca «Añadir todo».</p>`];
   let wk=false,fzNo=false;
-  const draw=()=>{w.innerHTML=`<div class="wcard">${dots()}${S[step]()}</div>`;const zc=w.querySelector("#zCity");if(zc){zc.value=useGps?tzIdx:sel.value;if(+zc.value===GPS_I)zc.value=tzIdx}const f=w.querySelector("input");if(f&&step===0)setTimeout(()=>f.focus(),50)};
+  const draw=()=>{w.innerHTML=`<div class="wcard">${step>0||wk||fzNo?`<button type="button" class="wback" data-back aria-label="Volver a la pregunta anterior">‹ Atrás</button>`:""}${dots()}${S[step]()}</div>`;const zc=w.querySelector("#zCity");if(zc){zc.value=useGps?tzIdx:sel.value;if(+zc.value===GPS_I)zc.value=tzIdx}const f=w.querySelector("input");if(f&&step===0)setTimeout(()=>f.focus(),50)};
   const keep=()=>{const n=w.querySelector("#zName");if(n)$("uname").value=n.value.trim();const c=w.querySelector("#zCity");if(c&&!useGps)sel.value=c.value;const k=w.querySelector("#zWake");if(k&&k.value)$("wake").value=k.value};
   w.addEventListener("change",e=>{if(e.target.id==="zCity"){useGps=false;const g=w.querySelector("#zGps");g.className="ghost";g.textContent="📍 Usar mi ubicación"}});
   w.addEventListener("click",e=>{const g=e.target.closest("#zGps"),go=e.target.closest("[data-go]"),pl=e.target.closest("[data-pill]");
     if(g){useGps=true;g.className="ok";g.textContent="✓ Usaré tu ubicación";return}
+    if(e.target.closest("[data-back]")){keep();if(step===3&&wk)wk=false;else if(step===4&&fzNo)fzNo=false;else{step=Math.max(0,step-1);if(step===3)wk=$("wOn").checked;if(step===4)fzNo=false}draw();return}
     if(go){keep();step=+go.dataset.go;draw();return}
     if(pl){keep();$("h-pastilla").checked=pl.dataset.pill==="1";step=3;draw();return}
     if(e.target.closest("[data-work]")){wk=true;draw();return}
