@@ -77,7 +77,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .why{margin-top:6px;display:inline-block;width:100%;text-decoration:none}.why summary{display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:15px;font-weight:600;color:var(--gold);list-style:none;min-height:32px}.why summary::-webkit-details-marker{display:none}.why summary::before{content:"💡"}.why p{margin:4px 0 2px;font-size:15px;line-height:1.45;color:var(--muted);font-weight:400}
 .wdays{gap:6px;flex-wrap:nowrap}.wdays .chip{flex:1;min-width:0}.wdays .chip span{width:100%;min-width:0;justify-content:center;padding:8px 0}
 .wtag{display:inline-block;margin-left:6px;font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
-.resetb{color:var(--danger);border-color:var(--danger)!important}#resetKeep.sure{background:var(--gold);color:var(--surface)}.resetb.sure{background:var(--danger);color:var(--surface)}
+.resetb{color:var(--danger);border-color:var(--danger)!important}button#resetKeep.sure{background:var(--gold)!important;color:var(--surface)!important}button.resetb.sure{background:var(--danger)!important;color:var(--surface)!important}
 .setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
@@ -392,7 +392,7 @@ button:active,.meal:active{transform:scale(.97)}
     <div class="streak"><span style="font-size:40px" aria-hidden="true">🔥</span><span class="num" id="stNum">0</span><span id="stTxt">días seguidos</span></div>
   </div></header>
   <div class="body"><div class="in">
-    <div class="card" style="display:grid;gap:12px"><h2 style="font-size:21px">🌱 Tu jardín</h2><p class="muted" style="margin:0;font-size:16px">Cada día que te cuidas crece una flor. Últimas 4 semanas.</p><div class="gdl" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="garden" id="garden"></div><p class="gleg"><span>🌻 casi todo</span><span>🌷 la mitad</span><span>🌱 algo</span></p><p id="gardenTxt" style="margin:0;font-weight:600"></p></div>
+    <div class="card" style="display:grid;gap:12px"><h2 style="font-size:21px">🌱 Tu jardín</h2><p class="muted" style="margin:0;font-size:16px">Cada día que te cuidas crece una flor. Últimas 4 semanas.</p><div class="gdl" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="garden" id="garden"></div><p class="gleg"><span>🌻 casi todo</span><span>🌷 la mitad</span><span>🌱 algo</span></p><p id="gardenTxt" style="margin:0;font-weight:600"></p><button type="button" class="ghost resetb" id="resetGarden" style="min-height:40px;font-size:15px;justify-self:center;padding:6px 16px">Reiniciar mi jardín</button></div>
     <div class="card" style="display:grid;gap:12px"><h2 style="font-size:21px">Hábitos esta semana</h2><div class="bars" id="bars"></div></div>
     <div class="card ci" id="feelToday"></div>
     <button type="button" id="copyProg">💬 Enviar mi semana a Juan</button>
@@ -441,10 +441,8 @@ button:active,.meal:active{transform:scale(.97)}
       <input type="file" id="bkFile" accept=".json,application/json,text/plain" hidden>
       <p class="muted note" id="bkNote">Guárdala en tus archivos o mándatela por WhatsApp. Si cambias de móvil, la recuperas aquí.</p></div>
     <div class="setgrp"><span style="font-weight:600">🔄 Empezar de cero</span>
-      <button type="button" class="ghost" id="resetKeep">Reiniciar, pero conservar mi jardín</button>
-      <p class="muted note" style="margin-top:-2px">Borra ajustes, platos de la semana y lista de la compra. Tu jardín, tu racha, cómo te has sentido y tus notas se quedan.</p>
-      <button type="button" class="ghost resetb" id="resetAll">Borrar todo y empezar de cero</button>
-      <p class="muted note" style="margin-top:-2px">Borra también tu jardín y tu progreso. Si quieres conservarlo, guarda antes una copia.</p></div>
+      <button type="button" class="ghost" id="resetKeep">Reiniciar la app</button>
+      <p class="muted note" style="margin-top:-2px">Borra ajustes, platos de la semana y lista de la compra. Tu jardín y tu progreso se quedan.</p></div>
     <button type="button" class="ghost" id="copyDay">Copiar mi horario de hoy</button>
     <textarea class="fb" id="fbDay" hidden readonly aria-label="Tu horario en texto"></textarea>
     <p class="muted" style="font-size:15px">Horario orientativo. Si tomas medicación, sigue siempre las indicaciones de tu médico.</p>
@@ -739,8 +737,8 @@ $("bkSave").addEventListener("click",()=>{
   const dd=new Date().toISOString().slice(0,10);
   saveFile(`copia-mi-dia-${dd}.json`,"application/json",JSON.stringify({app:"mi-dia-tiroideo",v:1,fecha:dd,datos:o}),()=>{$("bkNote").textContent="Copia guardada ✓ Guárdala en un sitio seguro."});
 });
-[["resetAll","Borrar todo y empezar de cero",k=>true],["resetKeep","Reiniciar, pero conservar mi jardín",k=>k!=="mdt-log"]].forEach(([id,lbl,del])=>{let rT=null;$(id).addEventListener("click",e=>{const b=e.currentTarget;
-  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="¿Seguro? Toca otra vez";clearTimeout(rT);rT=setTimeout(()=>{b.classList.remove("sure");b.textContent=lbl},4000);return}
+[["resetGarden","Reiniciar mi jardín",k=>k==="mdt-log"],["resetKeep","Reiniciar la app",k=>k!=="mdt-log"]].forEach(([id,lbl,del])=>{let rT=null;$(id).addEventListener("click",e=>{const b=e.currentTarget;
+  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent=id==="resetGarden"?"¿Seguro? Se borran flores, racha y notas":"¿Seguro? Toca otra vez";clearTimeout(rT);rT=setTimeout(()=>{b.classList.remove("sure");b.textContent=lbl},4000);return}
   try{Object.keys(localStorage).filter(k=>k.startsWith("mdt-")&&del(k)).forEach(k=>localStorage.removeItem(k))}catch(x){}
   b.textContent="Hecho ✓";setTimeout(()=>location.reload(),600)})});
 $("bkLoad").addEventListener("click",()=>$("bkFile").click());
