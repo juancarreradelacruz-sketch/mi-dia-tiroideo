@@ -717,7 +717,7 @@ function renderDay(){
   else if(!cur){const e=ev[0];nowEl.innerHTML=`<div class="top"><div class="big">${ic(e.title)}</div><div><small>Mañana empiezas con</small><h2>${e.title}</h2><span class="time">${fmt(e.t)}</span></div></div>`}
   else nowEl.innerHTML=`<div class="top"><div class="big" aria-hidden="true">${ic(cur.title)}</div><div><small>Ahora toca · ${fmt(cur.t)}</small><h2>${cur.title}</h2></div></div><p>${cur.text}</p><button type="button" data-done="${cur.title}">Hecho ✓</button>`;
   const part=t=>t<12*60?"Mañana":t<16*60?"Mediodía":t<ss?"Tarde":"Noche";let lastP="";
-  $("list").innerHTML=ev.map(e=>{const p=part(e.t),h=p!==lastP?`<li class="grp"><span>${{"Mañana":"🌅","Mediodía":"☀️","Tarde":"🌇","Noche":"🌙"}[p]||""} ${p}</span></li>`:"";lastP=p;return h+row(e,isDone(e),e.title==="Me despierto")}).join("");
+  $("list").innerHTML=ev.map(e=>{const p=part(e.t),h=p!==lastP?`<li class="grp"><span>${p}</span></li>`:"";lastP=p;return h+row(e,isDone(e),e.title==="Me despierto")}).join("");
   renderCheckin(nowM,ss);
   dayText=`Mi día — ${name}\n\n`+ev.map(e=>`${fmt(e.t)}  ${ic(e.title)} ${e.title}`).join("\n");
 }
