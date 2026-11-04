@@ -105,6 +105,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .rows li{flex-wrap:wrap}
 .rows li button.t{background:none;color:inherit;border:0;box-shadow:none;padding:6px 0;min-height:44px;border-radius:10px;font-size:18px;font-weight:600;text-align:left;display:flex;align-items:center;gap:8px}
 .rows li button.t .tt{min-width:0}
+.rows .tcol{display:grid;gap:2px;min-width:0}
+.rows .hint{font-size:14px;font-weight:600;color:var(--gold);white-space:nowrap}
+.rows li.done .hint{text-decoration:none}
 .rows .chev{margin-left:auto;color:var(--muted);font-size:18px;line-height:1;transition:transform .2s;padding:0 2px}
 .rows button.t[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .rows .det{flex-basis:100%;padding:0 0 6px 96px;display:grid;gap:8px}
@@ -605,7 +608,7 @@ const saveLog=()=>st("mdt-log",LOG);
 const FACES={e:[["😩","Poca"],["😐","Normal"],["😊","Mucha"]],s:[["😩","Mal"],["😐","Normal"],["😊","Excelente"]],h:[["😣","Bastante"],["😐","Media"],["😊","Muy baja"]]};
 const QS=[["e","Mi energía"],["s","Cómo dormí"],["h","Hinchazón"]];
 const faceRows=(X,attr)=>QS.map(([q,l])=>`<div class="cirow"><span>${l}</span><div class="faces">${FACES[q].map(([em,w],i)=>`<button type="button" ${attr}="${q}" data-v="${i+1}" aria-pressed="${X[q]===i+1}"><span aria-hidden="true">${em}</span>${w}</button>`).join("")}</div></div>`).join("");
-const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<button type="button" class="t" data-row="${e.title}" aria-expanded="${whyOpen.has(e.title)}"><span class="tt">${e.title}</span>${e.moved?`<span class="wtag">💼</span>`:""}<span class="chev" aria-hidden="true">⌄</span></button><time>${fmt(e.t)}</time>${whyOpen.has(e.title)?`<div class="det"><p>${e.text}</p>${WHY[e.title]?`<p class="whyp">💡 ${WHY[e.title]}</p>`:""}</div>`:""}</li>`;
+const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<button type="button" class="t" data-row="${e.title}" aria-expanded="${whyOpen.has(e.title)}"><span class="tcol"><span class="tt">${e.title}${e.moved?` <span class="wtag">💼</span>`:""}</span><span class="hint">${whyOpen.has(e.title)?"Ocultar":"💡 Ver por qué"}</span></span><span class="chev" aria-hidden="true">⌄</span></button><time>${fmt(e.t)}</time>${whyOpen.has(e.title)?`<div class="det"><p>${e.text}</p>${WHY[e.title]?`<p class="whyp">💡 ${WHY[e.title]}</p>`:""}</div>`:""}</li>`;
 
 function sched(y,m,d,lat,lng,tz,dow){
   const s=sun(y,m,d,lat,lng);
