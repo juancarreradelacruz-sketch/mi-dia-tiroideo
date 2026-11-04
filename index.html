@@ -108,8 +108,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .rows .tcol{display:grid;gap:2px;min-width:0}
 .rows .hint{font-size:14px;font-weight:600;color:var(--gold);white-space:nowrap}
 .rows li.done .hint{text-decoration:none}
-.rows .chev{margin-left:auto;color:var(--muted);font-size:18px;line-height:1;transition:transform .2s;padding:0 2px}
-.rows button.t[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.rows .chev{margin-left:auto;color:var(--muted);font-size:15px;line-height:1;padding:0 2px;opacity:.75}
+.rows button.t[aria-expanded="true"] .chev{font-size:18px;opacity:1}
+.lhint{margin:-2px 0 6px;font-size:14px;color:var(--muted)}
 .rows .det{flex-basis:100%;padding:0 0 6px 96px;display:grid;gap:8px}
 .rows .det p{margin:0;font-size:16px;line-height:1.45;color:var(--muted)}
 .rows .det .whyp{color:var(--fg);background:var(--gold-soft);border-radius:12px;padding:10px 12px;font-size:15px}
@@ -373,6 +374,7 @@ button:active,.meal:active{transform:scale(.97)}
     <div class="card">
       <div class="cardtitle"><h2>Mi día de hoy</h2></div>
       <div class="wban" id="wban" hidden></div>
+      <p class="lhint" id="lhint" hidden>💡 Toca un hábito para ver por qué es importante.</p>
       <ul class="rows" id="list"></ul>
     </div>
   </div></div>
@@ -608,7 +610,7 @@ const saveLog=()=>st("mdt-log",LOG);
 const FACES={e:[["😩","Poca"],["😐","Normal"],["😊","Mucha"]],s:[["😩","Mal"],["😐","Normal"],["😊","Excelente"]],h:[["😣","Bastante"],["😐","Media"],["😊","Muy baja"]]};
 const QS=[["e","Mi energía"],["s","Cómo dormí"],["h","Hinchazón"]];
 const faceRows=(X,attr)=>QS.map(([q,l])=>`<div class="cirow"><span>${l}</span><div class="faces">${FACES[q].map(([em,w],i)=>`<button type="button" ${attr}="${q}" data-v="${i+1}" aria-pressed="${X[q]===i+1}"><span aria-hidden="true">${em}</span>${w}</button>`).join("")}</div></div>`).join("");
-const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<button type="button" class="t" data-row="${e.title}" aria-expanded="${whyOpen.has(e.title)}"><span class="tcol"><span class="tt">${e.title}${e.moved?` <span class="wtag">💼</span>`:""}</span><span class="hint">${whyOpen.has(e.title)?"Ocultar":"💡 Ver por qué"}</span></span><span class="chev" aria-hidden="true">⌄</span></button><time>${fmt(e.t)}</time>${whyOpen.has(e.title)?`<div class="det"><p>${e.text}</p>${WHY[e.title]?`<p class="whyp">💡 ${WHY[e.title]}</p>`:""}</div>`:""}</li>`;
+const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<button type="button" class="t" data-row="${e.title}" aria-expanded="${whyOpen.has(e.title)}"><span class="tt">${e.title}${e.moved?` <span class="wtag">💼</span>`:""}</span><span class="chev" aria-hidden="true">${whyOpen.has(e.title)?"⌃":"💡"}</span></button><time>${fmt(e.t)}</time>${whyOpen.has(e.title)?`<div class="det"><p>${e.text}</p>${WHY[e.title]?`<p class="whyp">💡 ${WHY[e.title]}</p>`:""}</div>`:""}</li>`;
 
 function sched(y,m,d,lat,lng,tz,dow){
   const s=sun(y,m,d,lat,lng);
@@ -754,7 +756,8 @@ $("checkin").addEventListener("click",e=>{
     w.addEventListener("click",ev=>{const b=ev.target.closest("[data-k]");if(!b&&ev.target!==w)return;
       if(b&&b.dataset.k==="off"){box.checked=false;box.dispatchEvent(new Event("input",{bubbles:true}))}w.remove()})}))}
 ["city","wake","uname","wOn","wFrom","wTo","wBrk","wBrkT","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
-$("list").addEventListener("click",e=>{const b=e.target.closest("[data-row]");if(!b)return;const t=b.dataset.row;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t);renderDay()});
+try{$("lhint").hidden=localStorage.getItem("mdt-hint")==="1"}catch(e){$("lhint").hidden=false}
+$("list").addEventListener("click",e=>{const b=e.target.closest("[data-row]");if(!b)return;try{localStorage.setItem("mdt-hint","1")}catch(x){}$("lhint").hidden=true;const t=b.dataset.row;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t);renderDay()});
 function saveFile(name,type,text,onOk){
   const blob=new Blob([text],{type});
   try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})&&type!=="text/calendar"){navigator.share({files:[f],title:name}).then(onOk,()=>{});return}}catch(e){}
