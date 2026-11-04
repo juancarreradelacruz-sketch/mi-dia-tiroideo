@@ -91,7 +91,10 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .wcard label.f{text-align:left}.wem{font-size:52px;line-height:1}
 .wcard button.ok{background:var(--gold-soft);color:var(--fg);border:2px solid var(--gold)}
 .wdots{display:flex;gap:6px;justify-content:center}.wdots span{width:8px;height:8px;border-radius:50%;background:var(--line)}.wdots span.on{background:var(--gold);width:22px;border-radius:6px}
-.setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
+.workgrp{background:var(--gold-soft);border:0!important;border-radius:18px;padding:14px!important}
+.wban{display:flex;gap:10px;align-items:center;background:var(--gold-soft);border-radius:14px;padding:10px 12px;font-size:15px;font-weight:600;margin:4px 0 6px}
+.wban button{margin-left:auto;min-height:36px;padding:4px 12px;font-size:14px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2,.wcard .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
 .rows .ic{font-size:22px;width:28px;text-align:center;flex:none}
@@ -363,6 +366,7 @@ button:active,.meal:active{transform:scale(.97)}
     <div class="card ci" id="checkin" hidden></div>
     <div class="card">
       <div class="cardtitle"><h2>Mi día de hoy</h2></div>
+      <div class="wban" id="wban" hidden></div>
       <ul class="rows" id="list"></ul>
     </div>
   </div></div>
@@ -438,10 +442,9 @@ button:active,.meal:active{transform:scale(.97)}
     <label class="f">🙋‍♀️ Me llamo<input type="text" id="uname" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words"></label>
     <label class="f">📍 Vivo en<select id="city"></select></label>
     <label class="f">⏰ Me despierto a las<input type="time" id="wake" value="07:00"></label>
-    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
-    <details class="moreopt" id="moreOpt"><summary>⚙️ Más opciones</summary><div class="moreb">
-    <div class="setgrp" style="border-top:0;padding-top:0">
-      <label class="chip" style="justify-self:start"><input type="checkbox" id="wOn"><span>💼 Trabajo fuera de casa</span></label>
+    <div class="setgrp workgrp"><span style="font-weight:700;font-size:18px">💼 Mi trabajo</span>
+      <p class="muted note" style="margin-top:-4px">Si trabajas, la app adapta comidas, sol y paseo a tu horario.</p>
+      <label class="chip" style="justify-self:start"><input type="checkbox" id="wOn"><span>Trabajo fuera de casa</span></label>
       <div id="wBox" hidden style="display:grid;gap:10px">
         <span style="font-weight:600">Qué días trabajo</span>
         <div class="chips wdays" id="wDays"></div>
@@ -451,6 +454,8 @@ button:active,.meal:active{transform:scale(.97)}
         <p class="muted note">Las comidas, el sol y el paseo que caigan en tu horario de trabajo se mueven a tu descanso o a antes o después del trabajo.</p>
       </div>
     </div>
+    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
+    <details class="moreopt" id="moreOpt"><summary>⚙️ Más opciones</summary><div class="moreb">
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
     <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
@@ -557,6 +562,7 @@ function locate(){
 }
 function saveSet(){st("mdt-set",{w:{on:$("wOn").checked,from:$("wFrom").value,to:$("wTo").value,brk:$("wBrk").value,brkT:$("wBrkT").value,days:[0,1,2,3,4,5,6].filter(i=>$("wd-"+i).checked)},nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
 $("wOn").addEventListener("change",wSync);
+document.addEventListener("click",e=>{if(e.target.closest("#wbGo")){openS("setSheet","setClose");setTimeout(()=>{const g=document.querySelector(".workgrp");g&&g.scrollIntoView({block:"center",behavior:"smooth"})},250)}});
 $("openSet").addEventListener("click",()=>openS("setSheet","setClose"));
 $("setClose").addEventListener("click",()=>{saveSet();closeS("setSheet")});
 
@@ -658,6 +664,10 @@ function renderDay(){
    const left=ss-nowM,hh=Math.floor(left/60),mi=Math.round(left%60);
    const mid=day?`Quedan ${hh?hh+" h ":""}${mi} min de luz`:nowM>=ss?"🌙 Hora de descansar":"🌙 Aún es de noche";
    $("sunarc").innerHTML=`<svg viewBox="0 0 300 60" aria-hidden="true"><path d="M12 52 A138 44 0 0 1 288 52" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="2" stroke-dasharray="3 5"/>${day?`<path d="M12 52 A138 44 0 0 1 ${X.toFixed(1)} ${Y.toFixed(1)}" fill="none" stroke="var(--sun)" stroke-width="3" stroke-linecap="round"/><circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="9" fill="var(--sun)" opacity=".3"/><circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="5.5" fill="var(--sun)"/>`:""}<line x1="4" y1="52" x2="296" y2="52" stroke="currentColor" stroke-opacity=".3" stroke-width="1"/></svg><div class="lab"><span>🌅 ${fmt(sr)}</span><span class="mid">${mid}</span><span>🌇 ${fmt(ss)}</span></div>`}
+  {const wb=$("wban"),dw=(new Date().getDay()+6)%7;
+   if($("wOn").checked&&$("wd-"+dw).checked){wb.hidden=false;wb.innerHTML=`<span>💼 Hoy es día de trabajo (${$("wFrom").value}–${$("wTo").value}): tu día está adaptado.</span>`}
+   else if(!$("wOn").checked){wb.hidden=false;wb.innerHTML=`<span>💼 ¿Trabajas? Adapto tu día a tu horario.</span><button type="button" id="wbGo">Configurar</button>`}
+   else wb.hidden=true}
   const L=getL(dk());
   const tasks=ev.filter(e=>e.title!=="Me despierto");
   L.tot=tasks.length;L.d=L.d.filter(t=>tasks.some(e=>e.title===t));saveLog();
@@ -920,18 +930,24 @@ if(!saved)wizard();
 function wizard(){
   const w=document.createElement("div");w.className="wiz";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");
   let step=0,useGps=false;const opts=sel.innerHTML;
-  const dots=()=>`<div class="wdots">${[0,1,2].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
+  const dots=()=>`<div class="wdots">${[0,1,2,3].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
   const S=[
-    ()=>`<div class="wem">🌅</div><h2>¡Bienvenida!</h2><p>Mi Día Tiroideo te organiza el día al ritmo del sol. Solo son 3 preguntas.</p><label class="f">¿Cómo te llamas?<input type="text" id="zName" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words" value="${$("uname").value.replace(/"/g,"")}"></label><button type="button" data-go="1">Siguiente</button>`,
+    ()=>`<div class="wem">🌅</div><h2>¡Bienvenida!</h2><p>Mi Día Tiroideo te organiza el día al ritmo del sol. Solo son 4 preguntas.</p><label class="f">¿Cómo te llamas?<input type="text" id="zName" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words" value="${$("uname").value.replace(/"/g,"")}"></label><button type="button" data-go="1">Siguiente</button>`,
     ()=>`<div class="wem">📍</div><h2>¿Dónde vives?</h2><p>Para saber a qué hora sale y se pone el sol donde estás.</p><button type="button" id="zGps" class="${useGps?"ok":"ghost"}">${useGps?"✓ Usaré tu ubicación":"📍 Usar mi ubicación"}</button><label class="f" style="font-weight:400;color:var(--muted)">o elige tu ciudad<select id="zCity">${opts}</select></label><label class="f">⏰ ¿A qué hora te despiertas?<input type="time" id="zWake" value="${$("wake").value||"07:00"}"></label><button type="button" data-go="2">Siguiente</button>`,
-    ()=>`<div class="wem">💊</div><h2>¿Tomas pastilla para el tiroides?</h2><p>Así te separo bien el café y el desayuno.</p><button type="button" data-pill="1">Sí, la tomo</button><button type="button" class="ghost" data-pill="0">No tomo</button>`];
+    ()=>`<div class="wem">💊</div><h2>¿Tomas pastilla para el tiroides?</h2><p>Así te separo bien el café y el desayuno.</p><button type="button" data-pill="1">Sí, la tomo</button><button type="button" class="ghost" data-pill="0">No tomo</button>`,
+    ()=>`<div class="wem">💼</div><h2>¿Trabajas fuera de casa?</h2><p>Si trabajas, adapto tus comidas, el sol y el paseo a tu horario.</p>${wk?`<div style="display:grid;gap:10px;text-align:left"><span style="font-weight:600">Qué días</span><div class="chips wdays">${["L","M","X","J","V","S","D"].map((l,i)=>`<label class="chip"><input type="checkbox" data-zd="${i}"${$("wd-"+i).checked?" checked":""}><span>${l}</span></label>`).join("")}</div><div class="row2"><label class="f">Entro<input type="time" id="zFrom" value="${$("wFrom").value}"></label><label class="f">Salgo<input type="time" id="zTo" value="${$("wTo").value}"></label></div><span style="font-weight:600">☕ Descanso <span class="muted" style="font-weight:400;font-size:14px">(opcional)</span></span><div class="row2"><label class="f">Empieza<input type="time" id="zB1" value="${$("wBrk").value}"></label><label class="f">Termina<input type="time" id="zB2" value="${$("wBrkT").value}"></label></div></div><button type="button" data-fin="1">Listo</button>`:`<button type="button" data-work="1">Sí, trabajo</button><button type="button" class="ghost" data-fin="0">No trabajo</button>`}`];
+  let wk=false;
   const draw=()=>{w.innerHTML=`<div class="wcard">${dots()}${S[step]()}</div>`;const zc=w.querySelector("#zCity");if(zc){zc.value=useGps?tzIdx:sel.value;if(+zc.value===GPS_I)zc.value=tzIdx}const f=w.querySelector("input");if(f&&step===0)setTimeout(()=>f.focus(),50)};
   const keep=()=>{const n=w.querySelector("#zName");if(n)$("uname").value=n.value.trim();const c=w.querySelector("#zCity");if(c&&!useGps)sel.value=c.value;const k=w.querySelector("#zWake");if(k&&k.value)$("wake").value=k.value};
   w.addEventListener("change",e=>{if(e.target.id==="zCity"){useGps=false;const g=w.querySelector("#zGps");g.className="ghost";g.textContent="📍 Usar mi ubicación"}});
   w.addEventListener("click",e=>{const g=e.target.closest("#zGps"),go=e.target.closest("[data-go]"),pl=e.target.closest("[data-pill]");
     if(g){useGps=true;g.className="ok";g.textContent="✓ Usaré tu ubicación";return}
     if(go){keep();step=+go.dataset.go;draw();return}
-    if(pl){keep();$("h-pastilla").checked=pl.dataset.pill==="1";if(useGps)sel.value=GPS_I;saveSet();renderDay();renderWeek();if(useGps)locate();w.classList.add("bye");setTimeout(()=>w.remove(),300)}});
+    if(pl){keep();$("h-pastilla").checked=pl.dataset.pill==="1";step=3;draw();return}
+    if(e.target.closest("[data-work]")){wk=true;draw();return}
+    const fin=e.target.closest("[data-fin]");
+    if(fin){if(fin.dataset.fin==="1"){$("wOn").checked=true;w.querySelectorAll("[data-zd]").forEach(x=>$("wd-"+x.dataset.zd).checked=x.checked);["From","To"].forEach(k=>{const v=w.querySelector("#z"+k).value;if(v)$("w"+k).value=v});$("wBrk").value=w.querySelector("#zB1").value;$("wBrkT").value=w.querySelector("#zB2").value}else $("wOn").checked=false;
+      wSync();if(useGps)sel.value=GPS_I;saveSet();renderDay();renderWeek();if(useGps)locate();w.classList.add("bye");setTimeout(()=>w.remove(),300)}});
   draw();document.body.appendChild(w);
 }
 setInterval(()=>{if($("setSheet").hidden)renderDay()},60000);
