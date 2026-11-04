@@ -96,6 +96,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .wban button{margin-left:auto;min-height:36px;padding:4px 12px;font-size:14px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
 .emptyw{display:grid;gap:10px;text-align:center;justify-items:center;background:var(--gold-soft)!important}
 :root[data-big] .view,:root[data-big] .sheetin,:root[data-big] nav.tabbar,:root[data-big] .wcard,:root[data-big] .hwarn>div{zoom:1.15}
+.avgrp{background:var(--green-soft);border:0!important;border-radius:18px;padding:14px!important}
 .setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2,.wcard .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
@@ -457,15 +458,15 @@ button:active,.meal:active{transform:scale(.97)}
       </div>
     </div>
     <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
+    <div class="setgrp avgrp"><span style="font-weight:600">🔔 Avisos</span>
+      <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
+      <p class="muted note" id="icsNote">Te aviso de cada hábito a su hora durante 30 días, con tu horario de trabajo y el sol de cada día. Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada.</p></div>
     <details class="moreopt" id="moreOpt"><summary>⚙️ Más opciones</summary><div class="moreb">
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="bigOn"><span>🔠 Letra más grande</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="animOn" checked><span>🌊 Paisaje en movimiento</span></label>
     <p class="muted note" style="margin-top:-8px">Si lo quitas, gasta menos batería. Con batería baja ya se mueve más despacio solo.</p>
-    <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
-      <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
-      <p class="muted note" id="icsNote">Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada. Renuévalos una vez al mes.</p></div>
     <div class="setgrp"><span style="font-weight:600">🔄 Empezar de cero</span>
       <button type="button" class="ghost" id="resetKeep">Reiniciar la app</button>
       <p class="muted note" style="margin-top:-2px">Borra ajustes, platos de la semana y lista de la compra. Tu jardín y tu progreso se quedan.</p></div>
@@ -753,20 +754,26 @@ function saveFile(name,type,text,onOk){
   try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})&&type!=="text/calendar"){navigator.share({files:[f],title:name}).then(onOk,()=>{});return}}catch(e){}
   const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);onOk&&onOk();
 }
-$("icsBtn").addEventListener("click",()=>{
+function makeICS(onOk){
   const [name,lat,lng,tz]=CITIES[sel.value];const [y,m,d]=todayIn(tz).split("-").map(Number);
-  const {ev}=sched(y,m,d,lat,lng,tz,(new Date().getDay()+6)%7);
   const p=n=>String(n).padStart(2,"0"),esc=t=>t.replace(/[\\,;]/g,x=>"\\"+x);
-  const out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Mi Dia Tiroideo//ES","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+  const out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Mi Dia Tiroideo//ES","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Mi Día Tiroideo"];
   const stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
-  ev.filter(e=>e.title!=="Me despierto").forEach((e,i)=>{
-    const t=Math.round(e.t),dt=new Date(Date.UTC(y,m-1,d)+Math.floor(t/1440)*864e5),mm=((t%1440)+1440)%1440;
-    const ds=`${dt.getUTCFullYear()}${p(dt.getUTCMonth()+1)}${p(dt.getUTCDate())}T${p(Math.floor(mm/60))}${p(mm%60)}00`;
-    out.push("BEGIN:VEVENT",`UID:mdt-${i}-${ds}@mi-dia-tiroideo`,`DTSTAMP:${stamp}`,`DTSTART:${ds}`,"DURATION:PT10M","RRULE:FREQ=DAILY;COUNT=30",
-      `SUMMARY:${esc(ic(e.title)+" "+e.title)}`,`DESCRIPTION:${esc(e.text)}`,"BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${esc(e.title)}`,"TRIGGER:PT0S","END:VALARM","END:VEVENT")});
+  const dstr=(base,t)=>{const dt=new Date(base+Math.floor(t/1440)*864e5),mm=((t%1440)+1440)%1440;return `${dt.getUTCFullYear()}${p(dt.getUTCMonth()+1)}${p(dt.getUTCDate())}T${p(Math.floor(mm/60))}${p(mm%60)}00`};
+  const nowM=localMin(Date.now(),tz);
+  for(let k=0;k<30;k++){
+    const base=Date.UTC(y,m-1,d)+k*864e5,dd=new Date(base),Y=dd.getUTCFullYear(),M=dd.getUTCMonth()+1,D=dd.getUTCDate(),dow=(dd.getUTCDay()+6)%7;
+    const {ev}=sched(Y,M,D,lat,lng,tz,dow);
+    ev.filter(e=>e.title!=="Me despierto"&&!(k===0&&e.t<nowM)).forEach((e,i)=>{const ds=dstr(base,Math.round(e.t));
+      out.push("BEGIN:VEVENT",`UID:mdt-${ds}-${i}@mi-dia-tiroideo`,`DTSTAMP:${stamp}`,`DTSTART:${ds}`,"DURATION:PT10M",
+        `SUMMARY:${esc(ic(e.title)+" "+e.title)}`,`DESCRIPTION:${esc(e.text)}`,"BEGIN:VALARM","ACTION:DISPLAY",`DESCRIPTION:${esc(e.title)}`,"TRIGGER:PT0S","END:VALARM","END:VEVENT")})}
+  const last=Date.UTC(y,m-1,d)+29*864e5,ls=dstr(last,10*60);
+  out.push("BEGIN:VEVENT",`UID:mdt-renueva-${ls}@mi-dia-tiroideo`,`DTSTAMP:${stamp}`,`DTSTART:${ls}`,"DURATION:PT10M","SUMMARY:🔔 Renueva tus avisos de Mi Día","DESCRIPTION:Abre la app y toca «Poner mis avisos en el calendario» para el mes que viene.","BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:Renueva tus avisos","TRIGGER:PT0S","END:VALARM","END:VEVENT");
   out.push("END:VCALENDAR");
-  saveFile("mis-avisos-mi-dia.ics","text/calendar",out.join("\r\n"),()=>{$("icsBtn").textContent="Avisos listos ✓";setTimeout(()=>$("icsBtn").textContent="Poner mis avisos en el calendario",2500)});
-});
+  try{localStorage.setItem("mdt-ics",String(Date.now()))}catch(e){}
+  saveFile("mis-avisos-mi-dia.ics","text/calendar",out.join("\r\n"),onOk);
+}
+$("icsBtn").addEventListener("click",()=>makeICS(()=>{$("icsBtn").textContent="Avisos listos ✓";setTimeout(()=>$("icsBtn").textContent="Poner mis avisos en el calendario",2500)}));
 
 
 
@@ -941,12 +948,13 @@ if(!saved)wizard();
 function wizard(){
   const w=document.createElement("div");w.className="wiz";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");
   let step=0,useGps=false;const opts=sel.innerHTML;
-  const dots=()=>`<div class="wdots">${[0,1,2,3].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
+  const dots=()=>`<div class="wdots">${[0,1,2,3,4].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
   const S=[
-    ()=>`<div class="wem">🌅</div><h2>¡Bienvenida!</h2><p>Mi Día Tiroideo te organiza el día al ritmo del sol. Solo son 4 preguntas.</p><label class="f">¿Cómo te llamas?<input type="text" id="zName" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words" value="${$("uname").value.replace(/"/g,"")}"></label><button type="button" data-go="1">Siguiente</button>`,
+    ()=>`<div class="wem">🌅</div><h2>¡Bienvenida!</h2><p>Mi Día Tiroideo te organiza el día al ritmo del sol. Solo son unas preguntas rápidas.</p><label class="f">¿Cómo te llamas?<input type="text" id="zName" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words" value="${$("uname").value.replace(/"/g,"")}"></label><button type="button" data-go="1">Siguiente</button>`,
     ()=>`<div class="wem">📍</div><h2>¿Dónde vives?</h2><p>Para saber a qué hora sale y se pone el sol donde estás.</p><button type="button" id="zGps" class="${useGps?"ok":"ghost"}">${useGps?"✓ Usaré tu ubicación":"📍 Usar mi ubicación"}</button><label class="f" style="font-weight:400;color:var(--muted)">o elige tu ciudad<select id="zCity">${opts}</select></label><label class="f">⏰ ¿A qué hora te despiertas?<input type="time" id="zWake" value="${$("wake").value||"07:00"}"></label><button type="button" data-go="2">Siguiente</button>`,
     ()=>`<div class="wem">💊</div><h2>¿Tomas pastilla para el tiroides?</h2><p>Así te separo bien el café y el desayuno.</p><button type="button" data-pill="1">Sí, la tomo</button><button type="button" class="ghost" data-pill="0">No tomo</button>`,
-    ()=>`<div class="wem">💼</div><h2>¿Trabajas fuera de casa?</h2><p>Si trabajas, adapto tus comidas, el sol y el paseo a tu horario.</p>${wk?`<div style="display:grid;gap:10px;text-align:left"><span style="font-weight:600">Qué días</span><div class="chips wdays">${["L","M","X","J","V","S","D"].map((l,i)=>`<label class="chip"><input type="checkbox" data-zd="${i}"${$("wd-"+i).checked?" checked":""}><span>${l}</span></label>`).join("")}</div><div class="row2"><label class="f">Entro<input type="time" id="zFrom" value="${$("wFrom").value}"></label><label class="f">Salgo<input type="time" id="zTo" value="${$("wTo").value}"></label></div><span style="font-weight:600">☕ Descanso <span class="muted" style="font-weight:400;font-size:14px">(opcional)</span></span><div class="row2"><label class="f">Empieza<input type="time" id="zB1" value="${$("wBrk").value}"></label><label class="f">Termina<input type="time" id="zB2" value="${$("wBrkT").value}"></label></div></div><button type="button" data-fin="1">Listo</button>`:`<button type="button" data-work="1">Sí, trabajo</button><button type="button" class="ghost" data-fin="0">No trabajo</button>`}`];
+    ()=>`<div class="wem">💼</div><h2>¿Trabajas fuera de casa?</h2><p>Si trabajas, adapto tus comidas, el sol y el paseo a tu horario.</p>${wk?`<div style="display:grid;gap:10px;text-align:left"><span style="font-weight:600">Qué días</span><div class="chips wdays">${["L","M","X","J","V","S","D"].map((l,i)=>`<label class="chip"><input type="checkbox" data-zd="${i}"${$("wd-"+i).checked?" checked":""}><span>${l}</span></label>`).join("")}</div><div class="row2"><label class="f">Entro<input type="time" id="zFrom" value="${$("wFrom").value}"></label><label class="f">Salgo<input type="time" id="zTo" value="${$("wTo").value}"></label></div><span style="font-weight:600">☕ Descanso <span class="muted" style="font-weight:400;font-size:14px">(opcional)</span></span><div class="row2"><label class="f">Empieza<input type="time" id="zB1" value="${$("wBrk").value}"></label><label class="f">Termina<input type="time" id="zB2" value="${$("wBrkT").value}"></label></div></div><button type="button" data-fin="1">Listo</button>`:`<button type="button" data-work="1">Sí, trabajo</button><button type="button" class="ghost" data-fin="0">No trabajo</button>`}`,
+    ()=>`<div class="wem">🔔</div><h2>¿Te aviso de cada hábito?</h2><p>Te pongo un aviso en el calendario del móvil a la hora de cada hábito: el sol, el café, las comidas, el paseo… Así no se te olvida nada, aunque no abras la app.</p><button type="button" data-ics="1">Sí, avísame</button><button type="button" class="ghost" data-ics="0">Ahora no</button><p style="font-size:14px">Al darle, se abre tu calendario: toca «Añadir todo».</p>`];
   let wk=false;
   const draw=()=>{w.innerHTML=`<div class="wcard">${dots()}${S[step]()}</div>`;const zc=w.querySelector("#zCity");if(zc){zc.value=useGps?tzIdx:sel.value;if(+zc.value===GPS_I)zc.value=tzIdx}const f=w.querySelector("input");if(f&&step===0)setTimeout(()=>f.focus(),50)};
   const keep=()=>{const n=w.querySelector("#zName");if(n)$("uname").value=n.value.trim();const c=w.querySelector("#zCity");if(c&&!useGps)sel.value=c.value;const k=w.querySelector("#zWake");if(k&&k.value)$("wake").value=k.value};
@@ -958,7 +966,9 @@ function wizard(){
     if(e.target.closest("[data-work]")){wk=true;draw();return}
     const fin=e.target.closest("[data-fin]");
     if(fin){if(fin.dataset.fin==="1"){$("wOn").checked=true;w.querySelectorAll("[data-zd]").forEach(x=>$("wd-"+x.dataset.zd).checked=x.checked);["From","To"].forEach(k=>{const v=w.querySelector("#z"+k).value;if(v)$("w"+k).value=v});$("wBrk").value=w.querySelector("#zB1").value;$("wBrkT").value=w.querySelector("#zB2").value}else $("wOn").checked=false;
-      wSync();if(useGps)sel.value=GPS_I;saveSet();renderDay();renderWeek();if(useGps)locate();w.classList.add("bye");setTimeout(()=>w.remove(),300)}});
+      wSync();if(useGps)sel.value=GPS_I;saveSet();renderDay();renderWeek();if(useGps)locate();step=4;draw();return}
+    const ic2=e.target.closest("[data-ics]");
+    if(ic2){if(ic2.dataset.ics==="1")makeICS();w.classList.add("bye");setTimeout(()=>w.remove(),300)}});
   draw();document.body.appendChild(w);
 }
 setInterval(()=>{if($("setSheet").hidden)renderDay()},60000);
