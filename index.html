@@ -154,8 +154,17 @@ select,input[type=time],input[type=text]{min-height:52px;font-size:19px;color:va
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative}
 .chip input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}
-.chip span{display:inline-flex;align-items:center;min-height:46px;padding:8px 16px;border-radius:999px;background:var(--bg);font-weight:600;border:2px solid transparent}
-.chip input:checked+span{background:var(--green);color:var(--on-green)}
+.chip span{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:8px 10px 8px 16px;border-radius:999px;background:var(--surface);color:var(--muted);font-weight:600;border:2px dashed var(--line);transition:background .15s,color .15s,border-color .15s}
+.chip span::after{content:"+";display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--bg);color:var(--muted);font-size:17px;font-weight:700;line-height:1;flex:none}
+.chip input:not(:checked)+span{filter:grayscale(.15)}
+.chip input:checked+span{background:var(--green);color:var(--on-green);border:2px solid var(--green)}
+.chip input:checked+span::after{content:"✓";background:var(--on-green);color:var(--green);font-size:14px}
+.wdays .chip span::after{display:none}.wdays .chip span{padding:8px 0}
+.chipleg{font-size:14px;font-weight:400;color:var(--muted);margin:0}
+.hwarn{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,14,28,.55)}
+.hwarn>div{background:var(--surface);color:var(--fg);border-radius:24px;padding:22px 20px;max-width:380px;width:100%;display:grid;gap:12px;box-shadow:0 14px 50px rgba(0,0,0,.3);text-align:center;animation:partyIn .01s}
+.hwarn .em{font-size:44px;line-height:1}.hwarn h3{margin:0;font-family:var(--display);font-size:22px}.hwarn p{margin:0;font-size:16px;line-height:1.45;color:var(--muted)}
+.hwarn .bb{display:grid;gap:8px;margin-top:4px}.hwarn .bb button.ghost{color:var(--danger)}
 .chip input:focus-visible+span{outline:3px solid var(--gold);outline-offset:2px}
 
 /* Compra */
@@ -421,7 +430,7 @@ button:active,.meal:active{transform:scale(.97)}
         <p class="muted note">Las comidas, el sol y el paseo que caigan en tu horario de trabajo se mueven a tu descanso o a antes o después del trabajo.</p>
       </div>
     </div>
-    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><div class="chips" id="habits"></div></div>
+    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
     <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
@@ -697,6 +706,13 @@ $("checkin").addEventListener("click",e=>{
   const X=getL($("checkin").dataset.k);X[b.dataset.q]=+b.dataset.v;saveLog();
   if(X.e&&X.s&&X.h)ciEdit=false;renderDay();
 });
+{const HW={sol:["☀️","Sol de la mañana"],grounding:["🦶","Grounding"],caminar:["🚶‍♀️","Caminar"],fuerza:["💪","Fuerza"],magnesio:["🌙","Magnesio"]};
+  Object.keys(HW).forEach(k=>$("h-"+k).addEventListener("click",e=>{const box=e.currentTarget;if(box.checked)return;e.preventDefault();
+    const [em,t]=HW[k],w=document.createElement("div");w.className="hwarn";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");
+    w.innerHTML=`<div><div class="em">${em}</div><h3>¿Quitar "${t}"?</h3><p><b>Recuerda: este hábito es importante para tu salud y no deberías quitarlo.</b></p><p>${WHY[t]||""}</p><div class="bb"><button type="button" data-k="keep">Mantenerlo ✓</button><button type="button" class="ghost" data-k="off">Quitar igualmente</button></div></div>`;
+    document.body.appendChild(w);w.querySelector("[data-k=keep]").focus();
+    w.addEventListener("click",ev=>{const b=ev.target.closest("[data-k]");if(!b&&ev.target!==w)return;
+      if(b&&b.dataset.k==="off"){box.checked=false;box.dispatchEvent(new Event("input",{bubbles:true}))}w.remove()})}))}
 ["city","wake","uname","wOn","wFrom","wTo","wBrk","wBrkT","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
 document.addEventListener("click",e=>{const sm=e.target.closest(".why summary");if(!sm)return;const t=sm.parentElement.dataset.why;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t)});
 function saveFile(name,type,text,onOk){
