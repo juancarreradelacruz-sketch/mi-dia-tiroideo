@@ -78,15 +78,38 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .wdays{gap:6px;flex-wrap:nowrap}.wdays .chip{flex:1;min-width:0}.wdays .chip span{width:100%;min-width:0;justify-content:center;padding:8px 0}
 .wtag{display:inline-block;margin-left:6px;font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
 .resetb{color:var(--danger);border-color:var(--danger)!important}button#resetKeep.sure{background:var(--gold)!important;color:var(--surface)!important}button.resetb.sure{background:var(--danger)!important;color:var(--surface)!important}
+.moreopt{border-top:1px solid var(--line);padding-top:6px}
+.moreopt>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:52px;font-weight:700;font-size:18px;color:var(--fg)}
+.moreopt>summary::-webkit-details-marker{display:none}
+.moreopt>summary::after{content:"⌄";color:var(--muted);transition:transform .2s}
+.moreopt[open]>summary::after{transform:rotate(180deg)}
+.moreb{display:grid;gap:16px;padding:6px 0 4px}
+.wiz{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg,#23365c 0%,#5a3f7d 45%,#f0a070 85%,#fbc56e 100%);transition:opacity .3s}
+.wiz.bye{opacity:0}
+.wcard{background:var(--surface);color:var(--fg);border-radius:28px;padding:26px 22px 22px;width:100%;max-width:400px;display:grid;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.wcard h2{margin:0;font-family:var(--display);font-size:26px;line-height:1.2}.wcard p{margin:0;color:var(--muted);font-size:17px;line-height:1.45}
+.wcard label.f{text-align:left}.wem{font-size:52px;line-height:1}
+.wcard button.ok{background:var(--gold-soft);color:var(--fg);border:2px solid var(--gold)}
+.wdots{display:flex;gap:6px;justify-content:center}.wdots span{width:8px;height:8px;border-radius:50%;background:var(--line)}.wdots span.on{background:var(--gold);width:22px;border-radius:6px}
 .setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
 .rows .ic{font-size:22px;width:28px;text-align:center;flex:none}
 .rows .t{flex:1;min-width:0;font-weight:600}
+.rows li{flex-wrap:wrap}
+.rows li button.t{background:none;color:inherit;border:0;box-shadow:none;padding:6px 0;min-height:44px;border-radius:10px;font-size:18px;font-weight:600;text-align:left;display:flex;align-items:center;gap:8px}
+.rows li button.t .tt{min-width:0}
+.rows .chev{margin-left:auto;color:var(--muted);font-size:18px;line-height:1;transition:transform .2s;padding:0 2px}
+.rows button.t[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.rows .det{flex-basis:100%;padding:0 0 6px 96px;display:grid;gap:8px}
+.rows .det p{margin:0;font-size:16px;line-height:1.45;color:var(--muted)}
+.rows .det .whyp{color:var(--fg);background:var(--gold-soft);border-radius:12px;padding:10px 12px;font-size:15px}
+.rows li.done .det{text-decoration:none}
+@media (max-width:420px){.rows .det{padding-left:0}}
 #next .t small{display:none}
 .rows .t small{display:block;font-weight:400;color:var(--muted);font-size:15px;line-height:1.3}
 .rows time{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600;font-size:16px}
-.rows li.done .t{color:var(--muted);text-decoration:line-through}
+.rows li.done .t .tt{color:var(--muted);text-decoration:line-through}
 .cardtitle{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}
 .cardtitle h2{font-size:21px}
 .link{background:none;color:var(--green);min-height:44px;padding:4px 0;font-size:17px;text-decoration:underline;text-underline-offset:3px}
@@ -326,7 +349,6 @@ button:active,.meal:active{transform:scale(.97)}
   <header class="hero"><div class="in">
     <div class="hrow">
       <div>
-        <div class="brand">Tribu Tiroidea</div>
         <h1 id="hello">Buenos días</h1>
         <p class="sub" id="sunline"></p>
         <p class="quote" id="quote"></p>
@@ -393,11 +415,8 @@ button:active,.meal:active{transform:scale(.97)}
   </div></header>
   <div class="body"><div class="in">
     <div class="card" style="display:grid;gap:12px"><h2 style="font-size:21px">🌱 Tu jardín</h2><p class="muted" style="margin:0;font-size:16px">Cada día que te cuidas crece una flor. Últimas 4 semanas.</p><div class="gdl" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div><div class="garden" id="garden"></div><p class="gleg"><span>🌻 casi todo</span><span>🌷 la mitad</span><span>🌱 algo</span></p><p id="gardenTxt" style="margin:0;font-weight:600"></p><button type="button" class="ghost resetb" id="resetGarden" style="min-height:40px;font-size:15px;justify-self:center;padding:6px 16px">Reiniciar mi jardín</button></div>
-    <div class="card" style="display:grid;gap:12px"><h2 style="font-size:21px">Hábitos esta semana</h2><div class="bars" id="bars"></div></div>
-    <div class="card ci" id="feelToday"></div>
     <button type="button" id="copyProg">💬 Enviar mi semana a Juan</button>
     <p class="oncanvas" style="font-size:16px;margin-top:-6px;text-align:center">Se abre WhatsApp con tu resumen ya escrito. Solo dale a enviar.</p>
-    <button type="button" class="ghost" id="copyOnly">Solo copiar</button>
     <textarea class="fb" id="fbProg" hidden readonly aria-label="Resumen en texto"></textarea>
   </div></div>
 </section>
@@ -419,6 +438,8 @@ button:active,.meal:active{transform:scale(.97)}
     <label class="f">🙋‍♀️ Me llamo<input type="text" id="uname" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words"></label>
     <label class="f">📍 Vivo en<select id="city"></select></label>
     <label class="f">⏰ Me despierto a las<input type="time" id="wake" value="07:00"></label>
+    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
+    <details class="moreopt" id="moreOpt"><summary>⚙️ Más opciones</summary><div class="moreb">
     <div class="setgrp" style="border-top:0;padding-top:0">
       <label class="chip" style="justify-self:start"><input type="checkbox" id="wOn"><span>💼 Trabajo fuera de casa</span></label>
       <div id="wBox" hidden style="display:grid;gap:10px">
@@ -430,7 +451,6 @@ button:active,.meal:active{transform:scale(.97)}
         <p class="muted note">Las comidas, el sol y el paseo que caigan en tu horario de trabajo se mueven a tu descanso o a antes o después del trabajo.</p>
       </div>
     </div>
-    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
     <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
@@ -439,8 +459,7 @@ button:active,.meal:active{transform:scale(.97)}
     <div class="setgrp"><span style="font-weight:600">🔄 Empezar de cero</span>
       <button type="button" class="ghost" id="resetKeep">Reiniciar la app</button>
       <p class="muted note" style="margin-top:-2px">Borra ajustes, platos de la semana y lista de la compra. Tu jardín y tu progreso se quedan.</p></div>
-    <button type="button" class="ghost" id="copyDay">Copiar mi horario de hoy</button>
-    <textarea class="fb" id="fbDay" hidden readonly aria-label="Tu horario en texto"></textarea>
+    </div></details>
     <p class="muted" style="font-size:15px">Horario orientativo. Si tomas medicación, sigue siempre las indicaciones de tu médico.</p>
   </div>
 </div>
@@ -522,7 +541,7 @@ try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f
   if(nm==="Las Palmas")nm="Las Palmas de Gran Canaria";if(nm==="Tenerife")nm="Santa Cruz de Tenerife";if(nm==="Palma")nm="Palma de Mallorca";if(nm==="Guatemala")nm="Ciudad de Guatemala";
   if(nm&&byName(nm)>=0)idx=byName(nm);
   else{try{const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;const f=DEF[tz]?byName(DEF[tz]):CITIES.findIndex(c=>c[3]===tz);if(f>=0)idx=f}catch(e){}}
-  if(!saved||saved.gps)idx=GPS_I;
+  if(saved&&saved.gps)idx=GPS_I;
   sel.value=idx;
   setTimeout(wSync,0);
   if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(saved.w){$("wOn").checked=!!saved.w.on;if(saved.w.from)$("wFrom").value=saved.w.from;if(saved.w.to)$("wTo").value=saved.w.to;$("wBrk").value=saved.w.brk||"";$("wBrkT").value=saved.w.brkT||(saved.w.brk?fmt(toMin(saved.w.brk)+30):"");if(Array.isArray(saved.w.days))for(let i=0;i<7;i++)$("wd-"+i).checked=saved.w.days.includes(i)}if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
@@ -569,7 +588,7 @@ const saveLog=()=>st("mdt-log",LOG);
 const FACES={e:[["😩","Poca"],["😐","Normal"],["😊","Mucha"]],s:[["😩","Mal"],["😐","Normal"],["😊","Excelente"]],h:[["😣","Bastante"],["😐","Media"],["😊","Muy baja"]]};
 const QS=[["e","Mi energía"],["s","Cómo dormí"],["h","Hinchazón"]];
 const faceRows=(X,attr)=>QS.map(([q,l])=>`<div class="cirow"><span>${l}</span><div class="faces">${FACES[q].map(([em,w],i)=>`<button type="button" ${attr}="${q}" data-v="${i+1}" aria-pressed="${X[q]===i+1}"><span aria-hidden="true">${em}</span>${w}</button>`).join("")}</div></div>`).join("");
-const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<span class="t">${e.title}${e.moved?`<span class="wtag">💼 adaptado</span>`:""}<small>${e.text}</small>${WHY[e.title]?`<details class="why" data-why="${e.title}"${whyOpen.has(e.title)?" open":""}><summary>¿Por qué?</summary><p>${WHY[e.title]}</p></details>`:""}</span><time>${fmt(e.t)}</time></li>`;
+const row=(e,d,sk)=>`<li class="${d?"done":""}">${sk?`<span class="chk" style="border-color:transparent;color:var(--fg);font-size:22px" aria-hidden="true">${ic(e.title)}</span>`:`<button type="button" class="chk" data-done="${e.title}" aria-pressed="${d}" aria-label="${d?"Desmarcar":"Marcar como hecho"}: ${e.title}">✓</button>`}${sk?"":`<span class="ic" aria-hidden="true">${ic(e.title)}</span>`}<button type="button" class="t" data-row="${e.title}" aria-expanded="${whyOpen.has(e.title)}"><span class="tt">${e.title}</span>${e.moved?`<span class="wtag">💼</span>`:""}<span class="chev" aria-hidden="true">⌄</span></button><time>${fmt(e.t)}</time>${whyOpen.has(e.title)?`<div class="det"><p>${e.text}</p>${WHY[e.title]?`<p class="whyp">💡 ${WHY[e.title]}</p>`:""}</div>`:""}</li>`;
 
 function sched(y,m,d,lat,lng,tz,dow){
   const s=sun(y,m,d,lat,lng);
@@ -708,7 +727,7 @@ $("checkin").addEventListener("click",e=>{
     w.addEventListener("click",ev=>{const b=ev.target.closest("[data-k]");if(!b&&ev.target!==w)return;
       if(b&&b.dataset.k==="off"){box.checked=false;box.dispatchEvent(new Event("input",{bubbles:true}))}w.remove()})}))}
 ["city","wake","uname","wOn","wFrom","wTo","wBrk","wBrkT","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
-document.addEventListener("click",e=>{const sm=e.target.closest(".why summary");if(!sm)return;const t=sm.parentElement.dataset.why;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t)});
+$("list").addEventListener("click",e=>{const b=e.target.closest("[data-row]");if(!b)return;const t=b.dataset.row;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t);renderDay()});
 function saveFile(name,type,text,onOk){
   const blob=new Blob([text],{type});
   try{const f=new File([blob],name,{type});if(navigator.canShare&&navigator.canShare({files:[f]})&&type!=="text/calendar"){navigator.share({files:[f],title:name}).then(onOk,()=>{});return}}catch(e){}
@@ -729,7 +748,7 @@ $("icsBtn").addEventListener("click",()=>{
   saveFile("mis-avisos-mi-dia.ics","text/calendar",out.join("\r\n"),()=>{$("icsBtn").textContent="Avisos listos ✓";setTimeout(()=>$("icsBtn").textContent="Poner mis avisos en el calendario",2500)});
 });
 
-$("copyDay").addEventListener("click",e=>copy(dayText,e.currentTarget,"fbDay","Copiar mi horario de hoy"));
+
 
 /* ---------- SEMANA ---------- */
 // id, nombre, emoji, parte del plato, sección del súper, [ingredientes]
@@ -865,7 +884,7 @@ function renderProg(){
   let bars="";
   for(let i=6;i>=0;i--){const d=dAgo(i),x=LOG[dk(d)],done=x&&x.d?x.d.length:0,tot=x&&x.tot?x.tot:0,p=tot?done/tot:0;
     bars+=`<div class="b${i===0?" today":""}" title="${DN[d.getDay()]} ${d.getDate()}: ${done} de ${tot||"–"} hábitos"><div class="col${done?"":" zero"}" style="height:${Math.max(p*100,3)}%"></div><small>${tot?done:"–"}</small><span>${DL[d.getDay()]}</span></div>`}
-  $("bars").innerHTML=bars;
+  if($("bars"))$("bars").innerHTML=bars;
   {const keys=Object.keys(LOG).filter(k=>LOG[k]&&LOG[k].tot).sort(),first=keys[0]||dk();
    const today=new Date();today.setHours(12,0,0,0);const off=(today.getDay()+6)%7;const start=new Date(today);start.setDate(today.getDate()-off-21);
    let g="",fl=0;for(let i=0;i<28;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=dk(d),x=LOG[k],tot=x&&x.tot||0,dn=x&&x.d?x.d.length:0,p=tot?dn/tot:0,isT=k===dk(today);
@@ -873,7 +892,7 @@ function renderProg(){
      const em=p>=0.8?"🌻":p>=0.5?"🌷":p>0?"🌱":"";if(p>=0.5)fl++;
      g+=`<span class="${em?"":"soil"}${k<first?" pre":""}${isT?" today":""}" title="${d.getDate()}/${d.getMonth()+1}: ${dn} de ${tot||"–"}">${em}</span>`}
    $("garden").innerHTML=g;$("gardenTxt").textContent=fl?`Llevas ${fl} ${fl===1?"flor":"flores"} en tu jardín 🌼`:"Hoy puede salir tu primera flor 🌱"}
-  $("feelToday").innerHTML=`<h2>¿Cómo estás hoy?</h2>`+faceRows(LOG[dk()]||{},"data-pq");
+  if($("feelToday"))$("feelToday").innerHTML=`<h2>¿Cómo estás hoy?</h2>`+faceRows(LOG[dk()]||{},"data-pq");
 }
 function summary(){
   const a=dAgo(6),b=dAgo(0);let done=0,tot=0;const cnt={};
@@ -887,17 +906,34 @@ function summary(){
   if(notes.length)ln.push("","📝 Mis notas:",...notes);
   return ln.join("\n");
 }
-$("feelToday").addEventListener("click",e=>{const b=e.target.closest("[data-pq]");if(!b)return;const X=getL(dk());X[b.dataset.pq]=+b.dataset.v;saveLog();renderProg();renderDay()});
+$("feelToday")&&$("feelToday").addEventListener("click",e=>{const b=e.target.closest("[data-pq]");if(!b)return;const X=getL(dk());X[b.dataset.pq]=+b.dataset.v;saveLog();renderProg();renderDay()});
 const WA=["34622410827"];
 const wa=n=>{const u=`https://wa.me/${n}?text=${encodeURIComponent(summary())}`;const w=window.open(u,"_blank");if(!w)location.href=u};
 $("copyProg").addEventListener("click",()=>wa(WA[0]));
-$("copyOnly").addEventListener("click",e=>copy(summary(),e.currentTarget,"fbProg","Solo copiar"));
+
 
 /* ---------- Arranque ---------- */
 renderDay();renderWeek();if(+sel.value===GPS_I)locate();
 const h=location.hash.replace("#","");
 show(VIEWS.includes(h)?h:(st("mdt-view")||"dia"));
-if(!saved)openS("setSheet","setClose");
+if(!saved)wizard();
+function wizard(){
+  const w=document.createElement("div");w.className="wiz";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");
+  let step=0,useGps=false;const opts=sel.innerHTML;
+  const dots=()=>`<div class="wdots">${[0,1,2].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
+  const S=[
+    ()=>`<div class="wem">🌅</div><h2>¡Bienvenida!</h2><p>Mi Día Tiroideo te organiza el día al ritmo del sol. Solo son 3 preguntas.</p><label class="f">¿Cómo te llamas?<input type="text" id="zName" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words" value="${$("uname").value.replace(/"/g,"")}"></label><button type="button" data-go="1">Siguiente</button>`,
+    ()=>`<div class="wem">📍</div><h2>¿Dónde vives?</h2><p>Para saber a qué hora sale y se pone el sol donde estás.</p><button type="button" id="zGps" class="${useGps?"ok":"ghost"}">${useGps?"✓ Usaré tu ubicación":"📍 Usar mi ubicación"}</button><label class="f" style="font-weight:400;color:var(--muted)">o elige tu ciudad<select id="zCity">${opts}</select></label><label class="f">⏰ ¿A qué hora te despiertas?<input type="time" id="zWake" value="${$("wake").value||"07:00"}"></label><button type="button" data-go="2">Siguiente</button>`,
+    ()=>`<div class="wem">💊</div><h2>¿Tomas pastilla para el tiroides?</h2><p>Así te separo bien el café y el desayuno.</p><button type="button" data-pill="1">Sí, la tomo</button><button type="button" class="ghost" data-pill="0">No tomo</button>`];
+  const draw=()=>{w.innerHTML=`<div class="wcard">${dots()}${S[step]()}</div>`;const zc=w.querySelector("#zCity");if(zc){zc.value=useGps?tzIdx:sel.value;if(+zc.value===GPS_I)zc.value=tzIdx}const f=w.querySelector("input");if(f&&step===0)setTimeout(()=>f.focus(),50)};
+  const keep=()=>{const n=w.querySelector("#zName");if(n)$("uname").value=n.value.trim();const c=w.querySelector("#zCity");if(c&&!useGps)sel.value=c.value;const k=w.querySelector("#zWake");if(k&&k.value)$("wake").value=k.value};
+  w.addEventListener("change",e=>{if(e.target.id==="zCity"){useGps=false;const g=w.querySelector("#zGps");g.className="ghost";g.textContent="📍 Usar mi ubicación"}});
+  w.addEventListener("click",e=>{const g=e.target.closest("#zGps"),go=e.target.closest("[data-go]"),pl=e.target.closest("[data-pill]");
+    if(g){useGps=true;g.className="ok";g.textContent="✓ Usaré tu ubicación";return}
+    if(go){keep();step=+go.dataset.go;draw();return}
+    if(pl){keep();$("h-pastilla").checked=pl.dataset.pill==="1";if(useGps)sel.value=GPS_I;saveSet();renderDay();renderWeek();if(useGps)locate();w.classList.add("bye");setTimeout(()=>w.remove(),300)}});
+  draw();document.body.appendChild(w);
+}
 setInterval(()=>{if($("setSheet").hidden)renderDay()},60000);
 })();
 </script>
