@@ -464,7 +464,7 @@ button:active,.meal:active{transform:scale(.97)}
         <p class="muted note">Las comidas, el sol y el paseo que caigan en tu horario de trabajo se mueven a tu descanso o a antes o después del trabajo.</p>
       </div>
     </div>
-    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div></div>
+    <div style="display:grid;gap:8px"><span style="font-weight:600">Mis hábitos</span><p class="chipleg">Toca para activar o quitar. Los que tienen <b>✓</b> están activados.</p><div class="chips" id="habits"></div><label class="f" id="fzBox" style="margin-top:6px">💪 Entreno fuerza<select id="fzWhen"><option value="pm">Por la tarde</option><option value="am">Por la mañana</option></select></label></div>
     <div class="setgrp avgrp"><span style="font-weight:600">🔔 Avisos</span>
       <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
       <p class="muted note" id="icsNote">Te aviso de cada hábito a su hora durante 30 días, con tu horario de trabajo y el sol de cada día. Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada.</p></div>
@@ -567,7 +567,7 @@ try{const f=DEF[devTz]?byName(DEF[devTz]):CITIES.findIndex(c=>c[3]===devTz);if(f
   if(saved&&saved.gps)idx=GPS_I;
   sel.value=idx;
   setTimeout(wSync,0);
-  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(saved.w){$("wOn").checked=!!saved.w.on;if(saved.w.from)$("wFrom").value=saved.w.from;if(saved.w.to)$("wTo").value=saved.w.to;$("wBrk").value=saved.w.brk||"";$("wBrkT").value=saved.w.brkT||(saved.w.brk?fmt(toMin(saved.w.brk)+30):"");if(Array.isArray(saved.w.days))for(let i=0;i<7;i++)$("wd-"+i).checked=saved.w.days.includes(i)}if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
+  if(saved){$("h-pastilla").checked=!saved.np;if(saved.wake)$("wake").value=saved.wake;if(saved.nom)$("uname").value=saved.nom;if(saved.fz)$("fzWhen").value=saved.fz;if(saved.w){$("wOn").checked=!!saved.w.on;if(saved.w.from)$("wFrom").value=saved.w.from;if(saved.w.to)$("wTo").value=saved.w.to;$("wBrk").value=saved.w.brk||"";$("wBrkT").value=saved.w.brkT||(saved.w.brk?fmt(toMin(saved.w.brk)+30):"");if(Array.isArray(saved.w.days))for(let i=0;i<7;i++)$("wd-"+i).checked=saved.w.days.includes(i)}if(Array.isArray(saved.h))HAB.forEach(([k])=>$("h-"+k).checked=saved.h.includes(k))}
 })();
 function locate(){
   const fail=()=>{if(!st("mdt-gps")&&+sel.value===GPS_I){sel.value=tzIdx;saveSet();renderDay();window.__wxGet&&window.__wxGet()}};
@@ -578,8 +578,9 @@ function locate(){
     fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`).then(r=>r.json()).then(j=>{const n=j.city||j.locality||j.principalSubdivision;if(n){c[0]=n;$("optGps").textContent="📍 "+n+" (automática)";st("mdt-gps",{lat,lng,name:n});renderDay()}}).catch(()=>{});
   },fail,{timeout:15000,maximumAge:3600000});
 }
-function saveSet(){st("mdt-set",{w:{on:$("wOn").checked,from:$("wFrom").value,to:$("wTo").value,brk:$("wBrk").value,brkT:$("wBrkT").value,days:[0,1,2,3,4,5,6].filter(i=>$("wd-"+i).checked)},nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
+function saveSet(){st("mdt-set",{fz:$("fzWhen").value,w:{on:$("wOn").checked,from:$("wFrom").value,to:$("wTo").value,brk:$("wBrk").value,brkT:$("wBrkT").value,days:[0,1,2,3,4,5,6].filter(i=>$("wd-"+i).checked)},nom:$("uname").value.trim(),gps:+sel.value===GPS_I,name:CITIES[sel.value][0],wake:$("wake").value,np:!$("h-pastilla").checked,h:HAB.filter(([k])=>$("h-"+k).checked).map(x=>x[0])})}
 $("wOn").addEventListener("change",wSync);
+const fzSync=()=>{$("fzBox").hidden=!$("h-fuerza").checked};$("h-fuerza").addEventListener("input",fzSync);setTimeout(fzSync,0);
 document.addEventListener("click",e=>{if(e.target.closest("#wbGo")){openS("setSheet","setClose");setTimeout(()=>{const g=document.querySelector(".workgrp");g&&g.scrollIntoView({block:"center",behavior:"smooth"})},250)}});
 $("openSet").addEventListener("click",()=>openS("setSheet","setClose"));
 $("setClose").addEventListener("click",()=>{saveSet();closeS("setSheet")});
@@ -631,7 +632,11 @@ function sched(y,m,d,lat,lng,tz,dow){
   if(nC>=1)add(sn,nC===1?"Mi comida del día":"Comida",nC===1?"Tu única comida: completa, con proteína y grasa.":"La comida grande del día, con el sol más alto.");
   if(nC===0)add(sn,"Día de ayuno","Agua, agua con gas e infusiones. Si te encuentras mal, come algo.");
   if(has("caminar"))add(sn+30,"Caminar",nC===0?"Paseo suave de 15–20 minutos.":"Paseo de 15–20 minutos después de comer.");
-  if(has("fuerza")&&nC>0)add(Math.max(sn+120,cena-90),"Fuerza","20–30 minutos con peso que te cueste.");
+  if(has("fuerza")&&nC>0){
+    if($("fzWhen").value==="am"){const wd=$("wOn").checked&&$("wd-"+dow).checked,ws=toMin($("wFrom").value);
+      if(wd&&ws!=null&&ws-50>=wake+30)add(ws-50,"Fuerza","20–30 minutos con peso que te cueste, antes de entrar a trabajar.");
+      else add(Math.max(light+(has("sol")?20:0),wake+30),"Fuerza","20–30 minutos con peso que te cueste, por la mañana.")}
+    else add(Math.max(sn+120,cena-90),"Fuerza","20–30 minutos con peso que te cueste.")}
   if(nC>=2)add(cena,"Cena","Dos horas antes del atardecer. Después, solo agua o infusión.");
   add(ss,"Luces rojas o gafas rojas","Se pone el sol: apaga las luces blancas y pon luces rojas o ponte gafas rojas.");
   if(has("magnesio"))add(bed-60,"Magnesio","Una hora antes de dormir.");
@@ -660,7 +665,7 @@ function sched(y,m,d,lat,lng,tz,dow){
       const main=ev.find(e=>e.title==="Comida"||e.title==="Mi comida del día"),cw=ev.find(e=>e.title==="Caminar");
       if(main&&cw&&main.moved&&cw.t<main.t+30){cw.t=main.t+30;if(!cw.moved){cw.moved=true;cw.text+=" Después de tu comida."}}
       const gr=ev.find(e=>e.title==="Grounding");if(gr&&main&&main.moved&&gr.moved&&gr.t>=we&&gr.t<main.t+45)gr.t=main.t+50;
-      const fz=ev.find(e=>e.title==="Fuerza");if(fz&&main&&fz.t<main.t+75){fz.t=main.t+75;if(!fz.moved){fz.moved=true;fz.text+=" Al salir del trabajo."}}
+      const fz=ev.find(e=>e.title==="Fuerza");if(fz&&main&&fz.t>=ws&&fz.t<main.t+75){fz.t=main.t+75;if(!fz.moved){fz.moved=true;fz.text+=" Al salir del trabajo."}}
       const cn=ev.find(e=>e.title==="Cena");if(cn&&main&&cn.t<main.t+150){cn.t=Math.min(main.t+150,ss);if(!cn.moved){cn.moved=true;cn.text="Hoy algo más tarde por tu horario: que sea ligera."}}
     }
   }
@@ -757,7 +762,7 @@ $("checkin").addEventListener("click",e=>{
     document.body.appendChild(w);w.querySelector("[data-k=keep]").focus();
     w.addEventListener("click",ev=>{const b=ev.target.closest("[data-k]");if(!b&&ev.target!==w)return;
       if(b&&b.dataset.k==="off"){box.checked=false;box.dispatchEvent(new Event("input",{bubbles:true}))}w.remove()})}))}
-["city","wake","uname","wOn","wFrom","wTo","wBrk","wBrkT","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
+["city","wake","uname","fzWhen","wOn","wFrom","wTo","wBrk","wBrkT","wd-0","wd-1","wd-2","wd-3","wd-4","wd-5","wd-6","h-pastilla",...HAB.map(([k])=>"h-"+k)].forEach(id=>$(id).addEventListener("input",()=>{saveSet();renderDay();if(id==="city"){if(+sel.value===GPS_I)locate();window.__wxGet&&window.__wxGet()}}));
 try{$("lhint").hidden=localStorage.getItem("mdt-hint")==="1"}catch(e){$("lhint").hidden=false}
 $("list").addEventListener("click",e=>{const b=e.target.closest("[data-row]");if(!b)return;try{localStorage.setItem("mdt-hint","1")}catch(x){}$("lhint").hidden=true;const t=b.dataset.row;whyOpen.has(t)?whyOpen.delete(t):whyOpen.add(t);renderDay()});
 function saveFile(name,type,text,onOk){
@@ -963,14 +968,16 @@ if(!saved)wizard();
 function wizard(){
   const w=document.createElement("div");w.className="wiz";w.setAttribute("role","dialog");w.setAttribute("aria-modal","true");
   let step=0,useGps=false;const opts=sel.innerHTML;
-  const dots=()=>`<div class="wdots">${[0,1,2,3,4].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
+  const dots=()=>`<div class="wdots">${[0,1,2,3,4,5].map(i=>`<span class="${i===step?"on":""}"></span>`).join("")}</div>`;
   const S=[
     ()=>`<div class="wem">🌅</div><h2>¡Bienvenida!</h2><p>Mi Día Tiroideo te organiza el día al ritmo del sol. Solo son unas preguntas rápidas.</p><label class="f">¿Cómo te llamas?<input type="text" id="zName" placeholder="Tu nombre" maxlength="20" autocomplete="given-name" autocapitalize="words" value="${$("uname").value.replace(/"/g,"")}"></label><button type="button" data-go="1">Siguiente</button>`,
     ()=>`<div class="wem">📍</div><h2>¿Dónde vives?</h2><p>Para saber a qué hora sale y se pone el sol donde estás.</p><button type="button" id="zGps" class="${useGps?"ok":"ghost"}">${useGps?"✓ Usaré tu ubicación":"📍 Usar mi ubicación"}</button><label class="f" style="font-weight:400;color:var(--muted)">o elige tu ciudad<select id="zCity">${opts}</select></label><label class="f">⏰ ¿A qué hora te despiertas?<input type="time" id="zWake" value="${$("wake").value||"07:00"}"></label><button type="button" data-go="2">Siguiente</button>`,
     ()=>`<div class="wem">💊</div><h2>¿Tomas pastilla para el tiroides?</h2><p>Así te separo bien el café y el desayuno.</p><button type="button" data-pill="1">Sí, la tomo</button><button type="button" class="ghost" data-pill="0">No tomo</button>`,
     ()=>`<div class="wem">💼</div><h2>¿Trabajas fuera de casa?</h2><p>Si trabajas, adapto tus comidas, el sol y el paseo a tu horario.</p>${wk?`<div style="display:grid;gap:10px;text-align:left"><span style="font-weight:600">Qué días</span><div class="chips wdays">${["L","M","X","J","V","S","D"].map((l,i)=>`<label class="chip"><input type="checkbox" data-zd="${i}"${$("wd-"+i).checked?" checked":""}><span>${l}</span></label>`).join("")}</div><div class="row2"><label class="f">Entro<input type="time" id="zFrom" value="${$("wFrom").value}"></label><label class="f">Salgo<input type="time" id="zTo" value="${$("wTo").value}"></label></div><span style="font-weight:600">☕ Descanso <span class="muted" style="font-weight:400;font-size:14px">(opcional)</span></span><div class="row2"><label class="f">Empieza<input type="time" id="zB1" value="${$("wBrk").value}"></label><label class="f">Termina<input type="time" id="zB2" value="${$("wBrkT").value}"></label></div></div><button type="button" data-fin="1">Listo</button>`:`<button type="button" data-work="1">Sí, trabajo</button><button type="button" class="ghost" data-fin="0">No trabajo</button>`}`,
+    ()=>fzNo?`<div class="wem">🦴</div><h2>¿Cómo que no? 😏</h2><p>Tus músculos ya están escribiendo su carta de despedida. A partir de los 40 se pierde músculo cada año, y con él energía, huesos fuertes y metabolismo. Pero tranquila: con 20 minutos un par de veces por semana se lo pones difícil.</p><p><b>¿Te lo dejo puesto y lo intentas?</b></p><button type="button" data-fz="pm">Vale, por la tarde</button><button type="button" class="ghost" data-fz="am">Vale, por la mañana</button><button type="button" class="ghost" data-fz="no" style="color:var(--muted)">Que no, de verdad</button>`
+      :`<div class="wem">💪</div><h2>¿Entrenas fuerza?</h2><p>Pesas, gomas o con tu propio peso. Te lo pongo a la hora que mejor te venga${$("wOn").checked?" con tu trabajo":""}.</p><button type="button" data-fz="am">Sí, por la mañana${$("wOn").checked?" (antes de trabajar)":""}</button><button type="button" data-fz="pm">Sí, por la tarde</button><button type="button" class="ghost" data-fz="none">No entreno</button>`,
     ()=>`<div class="wem">🔔</div><h2>¿Te aviso de cada hábito?</h2><p>Te pongo un aviso en el calendario del móvil a la hora de cada hábito: el sol, el café, las comidas, el paseo… Así no se te olvida nada, aunque no abras la app.</p><button type="button" data-ics="1">Sí, avísame</button><button type="button" class="ghost" data-ics="0">Ahora no</button><p style="font-size:14px">Al darle, se abre tu calendario: toca «Añadir todo».</p>`];
-  let wk=false;
+  let wk=false,fzNo=false;
   const draw=()=>{w.innerHTML=`<div class="wcard">${dots()}${S[step]()}</div>`;const zc=w.querySelector("#zCity");if(zc){zc.value=useGps?tzIdx:sel.value;if(+zc.value===GPS_I)zc.value=tzIdx}const f=w.querySelector("input");if(f&&step===0)setTimeout(()=>f.focus(),50)};
   const keep=()=>{const n=w.querySelector("#zName");if(n)$("uname").value=n.value.trim();const c=w.querySelector("#zCity");if(c&&!useGps)sel.value=c.value;const k=w.querySelector("#zWake");if(k&&k.value)$("wake").value=k.value};
   w.addEventListener("change",e=>{if(e.target.id==="zCity"){useGps=false;const g=w.querySelector("#zGps");g.className="ghost";g.textContent="📍 Usar mi ubicación"}});
@@ -982,6 +989,9 @@ function wizard(){
     const fin=e.target.closest("[data-fin]");
     if(fin){if(fin.dataset.fin==="1"){$("wOn").checked=true;w.querySelectorAll("[data-zd]").forEach(x=>$("wd-"+x.dataset.zd).checked=x.checked);["From","To"].forEach(k=>{const v=w.querySelector("#z"+k).value;if(v)$("w"+k).value=v});$("wBrk").value=w.querySelector("#zB1").value;$("wBrkT").value=w.querySelector("#zB2").value}else $("wOn").checked=false;
       wSync();if(useGps)sel.value=GPS_I;saveSet();renderDay();renderWeek();if(useGps)locate();step=4;draw();return}
+    const fz=e.target.closest("[data-fz]");
+    if(fz){const v=fz.dataset.fz;if(v==="none"){fzNo=true;draw();return}
+      $("h-fuerza").checked=v!=="no";if(v!=="no")$("fzWhen").value=v;fzSync();saveSet();renderDay();step=5;draw();return}
     const ic2=e.target.closest("[data-ics]");
     if(ic2){if(ic2.dataset.ics==="1")makeICS();w.classList.add("bye");setTimeout(()=>w.remove(),300)}});
   draw();document.body.appendChild(w);
