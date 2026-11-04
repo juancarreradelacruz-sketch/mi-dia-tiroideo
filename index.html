@@ -436,10 +436,6 @@ button:active,.meal:active{transform:scale(.97)}
     <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
       <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
       <p class="muted note" id="icsNote">Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada. Renuévalos una vez al mes.</p></div>
-    <div class="setgrp"><span style="font-weight:600">💾 Copia de seguridad</span>
-      <div class="row2"><button type="button" class="ghost" id="bkSave">Guardar copia</button><button type="button" class="ghost" id="bkLoad">Recuperar copia</button></div>
-      <input type="file" id="bkFile" accept=".json,application/json,text/plain" hidden>
-      <p class="muted note" id="bkNote">Guárdala en tus archivos o mándatela por WhatsApp. Si cambias de móvil, la recuperas aquí.</p></div>
     <div class="setgrp"><span style="font-weight:600">🔄 Empezar de cero</span>
       <button type="button" class="ghost" id="resetKeep">Reiniciar la app</button>
       <p class="muted note" style="margin-top:-2px">Borra ajustes, platos de la semana y lista de la compra. Tu jardín y tu progreso se quedan.</p></div>
@@ -732,19 +728,7 @@ $("icsBtn").addEventListener("click",()=>{
   out.push("END:VCALENDAR");
   saveFile("mis-avisos-mi-dia.ics","text/calendar",out.join("\r\n"),()=>{$("icsBtn").textContent="Avisos listos ✓";setTimeout(()=>$("icsBtn").textContent="Poner mis avisos en el calendario",2500)});
 });
-$("bkSave").addEventListener("click",()=>{
-  const o={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("mdt-"))o[k]=localStorage.getItem(k)}}catch(e){}
-  const dd=new Date().toISOString().slice(0,10);
-  saveFile(`copia-mi-dia-${dd}.json`,"application/json",JSON.stringify({app:"mi-dia-tiroideo",v:1,fecha:dd,datos:o}),()=>{$("bkNote").textContent="Copia guardada ✓ Guárdala en un sitio seguro."});
-});
-[["resetGarden","Reiniciar mi jardín",k=>k==="mdt-log"],["resetKeep","Reiniciar la app",k=>k!=="mdt-log"]].forEach(([id,lbl,del])=>{let rT=null;$(id).addEventListener("click",e=>{const b=e.currentTarget;
-  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent=id==="resetGarden"?"¿Seguro? Se borran flores, racha y notas":"¿Seguro? Toca otra vez";clearTimeout(rT);rT=setTimeout(()=>{b.classList.remove("sure");b.textContent=lbl},4000);return}
-  try{Object.keys(localStorage).filter(k=>k.startsWith("mdt-")&&del(k)).forEach(k=>localStorage.removeItem(k))}catch(x){}
-  b.textContent="Hecho ✓";setTimeout(()=>location.reload(),600)})});
-$("bkLoad").addEventListener("click",()=>$("bkFile").click());
-$("bkFile").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const j=JSON.parse(r.result);if(j.app!=="mi-dia-tiroideo"||!j.datos)throw 0;Object.entries(j.datos).forEach(([k,v])=>{if(k.startsWith("mdt-"))localStorage.setItem(k,v)});$("bkNote").textContent="Copia recuperada ✓";setTimeout(()=>location.reload(),900)}catch(x){$("bkNote").textContent="Ese archivo no es una copia de Mi Día. Prueba con otro."}};
-  r.readAsText(f);e.target.value=""});
+
 $("copyDay").addEventListener("click",e=>copy(dayText,e.currentTarget,"fbDay","Copiar mi horario de hoy"));
 
 /* ---------- SEMANA ---------- */
