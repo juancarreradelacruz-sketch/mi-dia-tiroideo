@@ -585,7 +585,7 @@ const WHY={"Me despierto":"Durante la noche se acumulan bacterias en la boca y l
 "Mi pastilla":"Tómala como te haya indicado tu médico. Separarla del café y de la comida ayuda a que se absorba bien.",
 "Sol de la mañana":"La luz de la mañana pone en hora tu reloj interno: te da energía de día y te ayuda a dormir mejor por la noche. Sin gafas de sol, para que la luz llegue a tus ojos.",
 "Grounding":"Pisar descalza la tierra, el césped o la arena te relaja y te ayuda a bajar el estrés. Si lo haces al sol, sumas las dos cosas.",
-"Mi primer café":"Al despertar tu cuerpo ya se activa solo. Si esperas un poco, el café te sienta mejor y no te da bajón a media mañana. Si tomas pastilla, se separa más para no quitarle efecto.",
+"Mi primer café":"Al despertar tu cuerpo ya se activa solo. Si esperas un poco, el café te sienta mejor y no te da bajón a media mañana. Y siempre separado al menos una hora de las comidas, porque el café roba nutrientes como el hierro. Si tomas pastilla, se separa más para no quitarle efecto.",
 "Desayuno":"Empezar con proteína y grasa te da una energía estable y evita el hambre y las ganas de dulce a media mañana.",
 "Comida":"A mediodía, con el sol alto, digieres mejor. Por eso es el mejor momento para la comida más grande del día.",
 "Mi comida del día":"A mediodía, con el sol alto, digieres mejor. Si haces una sola comida, que sea completa y hasta quedarte saciada.",
@@ -620,7 +620,7 @@ function sched(y,m,d,lat,lng,tz,dow){
   if(has("grounding"))add(light+(has("sol")?15:0),"Grounding","10–15 minutos descalza en césped, tierra o arena.");
   if(has("cafe"))add(eat,"Mi primer café",pill?"2 horas y media después de la pastilla.":"Hora y media después de despertar.");
   const nC=(typeof plan!=="undefined"&&plan[dow])?plan[dow].n:3;
-  if(nC===3){let dt=has("cafe")?eat+60:eat;if(dt>sn-120)dt=Math.max(eat,sn-150);add(dt,"Desayuno",has("cafe")&&dt>=eat+60?"Proteína y grasa: huevos, sardinas, carne. Una hora después del café.":"Proteína y grasa: huevos, sardinas, carne.")}
+  if(nC===3){const dt=has("cafe")?eat+60:eat;if(dt<=sn-120)add(dt,"Desayuno",has("cafe")?"Proteína y grasa: huevos, sardinas, carne. Una hora después del café.":"Proteína y grasa: huevos, sardinas, carne.");else ev.lateNote="🍳 Hoy no hay desayuno: te has despertado tarde y se juntaría con la comida. Tu primera comida es la de mediodía."}
   if(nC>=1)add(sn,nC===1?"Mi comida del día":"Comida",nC===1?"Tu única comida: completa, con proteína y grasa.":"La comida grande del día, con el sol más alto.");
   if(nC===0)add(sn,"Día de ayuno","Agua, agua con gas e infusiones. Si te encuentras mal, come algo.");
   if(has("caminar"))add(sn+30,"Caminar",nC===0?"Paseo suave de 15–20 minutos.":"Paseo de 15–20 minutos después de comer.");
@@ -657,7 +657,9 @@ function sched(y,m,d,lat,lng,tz,dow){
       const cn=ev.find(e=>e.title==="Cena");if(cn&&main&&cn.t<main.t+150){cn.t=Math.min(main.t+150,ss);if(!cn.moved){cn.moved=true;cn.text="Hoy algo más tarde por tu horario: que sea ligera."}}
     }
   }
+  {const cf=ev.find(e=>e.title==="Mi primer café");if(cf)ev.filter(e=>["Desayuno","Comida","Mi comida del día"].includes(e.title)).forEach(f=>{if(Math.abs(f.t-cf.t)<60){cf.t=f.t+60;cf.text="Una hora después de comer: el café junto a la comida roba nutrientes.";cf.moved=true}})}
   ev.sort((a,b)=>a.t-b.t);
+  if(ev.lateNote)(ev.notes=ev.notes||[]).push(ev.lateNote);
   return {ev,sr,sn,ss,notes:ev.notes||[]};
 }
 function renderDay(){
@@ -677,6 +679,7 @@ function renderDay(){
    $("sunarc").innerHTML=`<svg viewBox="0 0 300 60" aria-hidden="true"><path d="M12 52 A138 44 0 0 1 288 52" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="2" stroke-dasharray="3 5"/>${day?`<path d="M12 52 A138 44 0 0 1 ${X.toFixed(1)} ${Y.toFixed(1)}" fill="none" stroke="var(--sun)" stroke-width="3" stroke-linecap="round"/><circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="9" fill="var(--sun)" opacity=".3"/><circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="5.5" fill="var(--sun)"/>`:""}<line x1="4" y1="52" x2="296" y2="52" stroke="currentColor" stroke-opacity=".3" stroke-width="1"/></svg><div class="lab"><span>🌅 ${fmt(sr)}</span><span class="mid">${mid}</span><span>🌇 ${fmt(ss)}</span></div>`}
   {const wb=$("wban"),dw=(new Date().getDay()+6)%7;
    if($("wOn").checked&&$("wd-"+dw).checked){wb.hidden=false;wb.innerHTML=`<span>💼 Hoy es día de trabajo (${$("wFrom").value}–${$("wTo").value}): tu día está adaptado.${notes.map(n=>`<br><span style="display:inline-block;margin-top:6px;font-weight:500">${n}</span>`).join("")}</span>`}
+   else if(notes.length){wb.hidden=false;wb.innerHTML=`<span>${notes.join("<br>")}</span>`}
    else if(!$("wOn").checked){wb.hidden=false;wb.innerHTML=`<span>💼 ¿Trabajas? Adapto tu día a tu horario.</span><button type="button" id="wbGo">Configurar</button>`}
    else wb.hidden=true}
   const L=getL(dk());
