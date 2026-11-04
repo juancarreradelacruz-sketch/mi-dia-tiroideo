@@ -773,6 +773,10 @@ function makeICS(onOk){
   try{localStorage.setItem("mdt-ics",String(Date.now()))}catch(e){}
   saveFile("mis-avisos-mi-dia.ics","text/calendar",out.join("\r\n"),onOk);
 }
+[["resetGarden","Reiniciar mi jardín",k=>k==="mdt-log"],["resetKeep","Reiniciar la app",k=>k!=="mdt-log"]].forEach(([id,lbl,del])=>{let rT=null;$(id).addEventListener("click",e=>{const b=e.currentTarget;
+  if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent=id==="resetGarden"?"¿Seguro? Se borran flores, racha y notas":"¿Seguro? Toca otra vez";clearTimeout(rT);rT=setTimeout(()=>{b.classList.remove("sure");b.textContent=lbl},4000);return}
+  try{Object.keys(localStorage).filter(k=>k.startsWith("mdt-")&&del(k)).forEach(k=>localStorage.removeItem(k))}catch(x){}
+  b.textContent="Hecho ✓";setTimeout(()=>location.reload(),600)})});
 $("icsBtn").addEventListener("click",()=>makeICS(()=>{$("icsBtn").textContent="Avisos listos ✓";setTimeout(()=>$("icsBtn").textContent="Poner mis avisos en el calendario",2500)}));
 
 
