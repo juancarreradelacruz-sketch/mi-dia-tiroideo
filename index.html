@@ -94,6 +94,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-vis
 .workgrp{background:var(--gold-soft);border:0!important;border-radius:18px;padding:14px!important}
 .wban{display:flex;gap:10px;align-items:center;background:var(--gold-soft);border-radius:14px;padding:10px 12px;font-size:15px;font-weight:600;margin:4px 0 6px}
 .wban button{margin-left:auto;min-height:36px;padding:4px 12px;font-size:14px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.emptyw{display:grid;gap:10px;text-align:center;justify-items:center;background:var(--gold-soft)!important}
+:root[data-big] .view,:root[data-big] .sheetin,:root[data-big] nav.tabbar,:root[data-big] .wcard,:root[data-big] .hwarn>div{zoom:1.15}
 .setgrp{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px}.setgrp .row2,.wcard .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setgrp .row2>*{min-width:0}.setgrp .note{font-size:14px;margin:0}
 .chk{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:2px solid var(--line);background:transparent;color:transparent;font-size:20px;flex:none;display:grid;place-items:center}
 .chk[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--on-green)}
@@ -297,7 +299,7 @@ button:active,.meal:active{transform:scale(.97)}
 .sunarc{display:grid;gap:2px;margin-top:-4px}
 .sunarc svg{width:100%;max-width:360px;height:auto;display:block;overflow:visible}
 .sunarc .lab{display:flex;justify-content:space-between;max-width:360px;font-size:14px;font-weight:600;opacity:.92}
-.sunarc .mid{text-align:center;flex:1}
+.sunarc .mid{text-align:center;flex:1;min-width:0}.sunarc .lab{gap:8px}:root[data-big] .sunarc .lab{font-size:12.5px}
 #v-dia .hero{padding-bottom:110px}
 /* Destellos y confeti */
 .spark{position:fixed;z-index:60;pointer-events:none;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--sun);animation:spark .7s cubic-bezier(.2,.7,.3,1) forwards}
@@ -458,6 +460,9 @@ button:active,.meal:active{transform:scale(.97)}
     <details class="moreopt" id="moreOpt"><summary>⚙️ Más opciones</summary><div class="moreb">
     <label class="chip" style="justify-self:start"><input type="checkbox" id="sndOn" checked><span>🔊 Sonidos al tocar</span></label>
     <label class="chip" style="justify-self:start"><input type="checkbox" id="nightOn" checked><span>🌙 Modo noche rojo al atardecer</span></label>
+    <label class="chip" style="justify-self:start"><input type="checkbox" id="bigOn"><span>🔠 Letra más grande</span></label>
+    <label class="chip" style="justify-self:start"><input type="checkbox" id="animOn" checked><span>🌊 Paisaje en movimiento</span></label>
+    <p class="muted note" style="margin-top:-8px">Si lo quitas, gasta menos batería. Con batería baja ya se mueve más despacio solo.</p>
     <div class="setgrp"><span style="font-weight:600">🔔 Avisos</span>
       <button type="button" id="icsBtn">Poner mis avisos en el calendario</button>
       <p class="muted note" id="icsNote">Se abre tu calendario: dale a «Añadir todo». Suenan aunque la app esté cerrada. Renuévalos una vez al mes.</p></div>
@@ -536,6 +541,11 @@ const todayIn=tz=>new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",mo
 const saved=st("mdt-set");
 $("wDays").innerHTML=["L","M","X","J","V","S","D"].map((l,i)=>`<label class="chip"><input type="checkbox" id="wd-${i}"${i<5?" checked":""}><span>${l}</span></label>`).join("");
 const wSync=()=>{$("wBox").hidden=!$("wOn").checked};
+try{$("bigOn").checked=localStorage.getItem("mdt-big")==="1";$("animOn").checked=localStorage.getItem("mdt-anim")!=="0"}catch(e){}
+const bigSync=()=>{if($("bigOn").checked)document.documentElement.dataset.big="1";else delete document.documentElement.dataset.big};bigSync();
+$("bigOn").addEventListener("change",()=>{try{localStorage.setItem("mdt-big",$("bigOn").checked?"1":"0")}catch(e){};bigSync()});
+window.__mdtAnim=$("animOn").checked;
+$("animOn").addEventListener("change",()=>{try{localStorage.setItem("mdt-anim",$("animOn").checked?"1":"0")}catch(e){};window.__mdtAnim=$("animOn").checked;window.__mdtAnimChg&&window.__mdtAnimChg()});
 try{$("nightOn").checked=localStorage.getItem("mdt-night")!=="0"}catch(e){}
 $("nightOn").addEventListener("change",()=>{try{localStorage.setItem("mdt-night",$("nightOn").checked?"1":"0")}catch(e){};renderDay()});
 let tzIdx=byName("Madrid");
@@ -638,7 +648,7 @@ function sched(y,m,d,lat,lng,tz,dow){
           else mark(e,we+10,g?"Al salir del trabajo, sin prisas.":"Al salir del trabajo.")}
         else if(AFTER.includes(e.title))mark(e,we+(e.title==="Cena"?20:e.title==="Fuerza"?60:15),"Al salir del trabajo.");
       });
-      if(ev.some(e=>e.drop)){for(let i=ev.length-1;i>=0;i--)if(ev[i].drop)ev.splice(i,1);const cm=ev.find(e=>e.title==="Comida");if(cm){cm.text+=" Hoy es tu primera comida del día: que sea completa.";cm.moved=true}}
+      if(ev.some(e=>e.drop)){for(let i=ev.length-1;i>=0;i--)if(ev[i].drop)ev.splice(i,1);const cm=ev.find(e=>e.title==="Comida");if(cm){cm.text+=" Hoy es tu primera comida del día: que sea completa.";cm.moved=true;ev.notes=[`🍳 Hoy no hay desayuno: no te da tiempo antes de entrar a trabajar. Tu primera comida es a las ${fmt(cm.t)}.`]}}
       const main=ev.find(e=>e.title==="Comida"||e.title==="Mi comida del día"),cw=ev.find(e=>e.title==="Caminar");
       if(main&&cw&&main.moved&&cw.t<main.t+30){cw.t=main.t+30;if(!cw.moved){cw.moved=true;cw.text+=" Después de tu comida."}}
       const gr=ev.find(e=>e.title==="Grounding");if(gr&&main&&main.moved&&gr.moved&&gr.t>=we&&gr.t<main.t+45)gr.t=main.t+50;
@@ -647,7 +657,7 @@ function sched(y,m,d,lat,lng,tz,dow){
     }
   }
   ev.sort((a,b)=>a.t-b.t);
-  return {ev,sr,sn,ss};
+  return {ev,sr,sn,ss,notes:ev.notes||[]};
 }
 function renderDay(){
   const [name,lat,lng,tz]=CITIES[sel.value];
@@ -656,7 +666,7 @@ function renderDay(){
   const fd=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"});
   $("sunline").textContent=fd.charAt(0).toUpperCase()+fd.slice(1)+(window.__wxStr?" · "+window.__wxStr:"");
   $("setSum").textContent=`📍 ${name} · ⏰ ${$("wake").value||"07:00"}`;
-  const {ev,sr,sn,ss}=sched(y,m,d,lat,lng,tz,(new Date().getDay()+6)%7);
+  const {ev,sr,sn,ss,notes}=sched(y,m,d,lat,lng,tz,(new Date().getDay()+6)%7);
   {const nm=localMin(Date.now(),tz),nt=$("nightOn").checked&&(nm>=ss||nm<sr);if(nt)document.documentElement.dataset.night="1";else delete document.documentElement.dataset.night;
    const tc=document.querySelector('meta[name="theme-color"]');if(tc)tc.content=nt?"#2b0b08":"#23365c"}
   const nowM=localMin(Date.now(),tz);
@@ -665,7 +675,7 @@ function renderDay(){
    const mid=day?`Quedan ${hh?hh+" h ":""}${mi} min de luz`:nowM>=ss?"🌙 Hora de descansar":"🌙 Aún es de noche";
    $("sunarc").innerHTML=`<svg viewBox="0 0 300 60" aria-hidden="true"><path d="M12 52 A138 44 0 0 1 288 52" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="2" stroke-dasharray="3 5"/>${day?`<path d="M12 52 A138 44 0 0 1 ${X.toFixed(1)} ${Y.toFixed(1)}" fill="none" stroke="var(--sun)" stroke-width="3" stroke-linecap="round"/><circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="9" fill="var(--sun)" opacity=".3"/><circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="5.5" fill="var(--sun)"/>`:""}<line x1="4" y1="52" x2="296" y2="52" stroke="currentColor" stroke-opacity=".3" stroke-width="1"/></svg><div class="lab"><span>🌅 ${fmt(sr)}</span><span class="mid">${mid}</span><span>🌇 ${fmt(ss)}</span></div>`}
   {const wb=$("wban"),dw=(new Date().getDay()+6)%7;
-   if($("wOn").checked&&$("wd-"+dw).checked){wb.hidden=false;wb.innerHTML=`<span>💼 Hoy es día de trabajo (${$("wFrom").value}–${$("wTo").value}): tu día está adaptado.</span>`}
+   if($("wOn").checked&&$("wd-"+dw).checked){wb.hidden=false;wb.innerHTML=`<span>💼 Hoy es día de trabajo (${$("wFrom").value}–${$("wTo").value}): tu día está adaptado.${notes.map(n=>`<br><span style="display:inline-block;margin-top:6px;font-weight:500">${n}</span>`).join("")}</span>`}
    else if(!$("wOn").checked){wb.hidden=false;wb.innerHTML=`<span>💼 ¿Trabajas? Adapto tu día a tu horario.</span><button type="button" id="wbGo">Configurar</button>`}
    else wb.hidden=true}
   const L=getL(dk());
@@ -817,7 +827,8 @@ function renderWeek(){
   $("dayTitle").textContent=DAYN[day].charAt(0).toUpperCase()+DAYN[day].slice(1)+" "+weekDate(day).getDate();
   document.querySelectorAll("#seg [data-n]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.n===plan[day].n));
   if(plan[day].n===0){$("meals").innerHTML=`<div class="card fast"><b>💧 Día de ayuno</b><p>Agua, agua con gas e infusiones durante todo el día.</p><p class="muted">Si te mareas o te encuentras mal, come algo y ya está.</p></div>`;return}
-  $("meals").innerHTML=activeMeals(day).map(([m,label,em])=>{
+  const emptyWeek=plan.every(d=>MEALS.every(([m])=>!d[m]||!d[m].length));
+  $("meals").innerHTML=(emptyWeek?`<div class="card emptyw"><div style="font-size:42px;line-height:1">✨</div><b>¿Te monto la semana?</b><p class="muted" style="margin:0">Relleno todos los días con menús ya pensados. Luego cambias lo que quieras.</p><button type="button" id="fillAll">Rellenar mi semana</button></div>`:"")+activeMeals(day).map(([m,label,em])=>{
     const L=plan[day][m];
     const PH={p:"🥩",vh:"🥬",g:"🧈"};const z=c=>L.filter(id=>c.includes(F[id][3])).map(id=>F[id][2]).join("")||`<span class="ph">${PH[c]}</span>`;
     return `<button type="button" class="meal" data-add="${m}" aria-label="${label}: ${L.length?L.map(id=>F[id][1]).join(", "):"vacío"}. Toca para cambiar">
@@ -827,7 +838,7 @@ function renderWeek(){
 }
 $("days").addEventListener("click",e=>{const b=e.target.closest("[data-d]");if(b){day=+b.dataset.d;renderWeek()}});
 $("seg").addEventListener("click",e=>{const b=e.target.closest("[data-n]");if(!b)return;plan[day].n=+b.dataset.n;savePlan();renderWeek();renderDay()});
-$("meals").addEventListener("click",e=>{const ad=e.target.closest("[data-add]");if(ad)openFoods(ad.dataset.add)});
+$("meals").addEventListener("click",e=>{if(e.target.closest("#fillAll")){doAct("fillWeek",e.target);return}const ad=e.target.closest("[data-add]");if(ad)openFoods(ad.dataset.add)});
 
 function openFoods(m){
   sheetMode="foods";sheetMeal=m;
@@ -1142,11 +1153,16 @@ function draw(t){
   if(snowy){ctx.fillStyle="rgba(255,255,255,.75)";for(const [x0,y0,v] of RN){const y=((y0+t*0.06*v)%1)*H,x=x0*W+Math.sin(t*v+y0*9)*10;ctx.beginPath();ctx.arc(x,y,1+v,0,6.2832);ctx.fill()}}
   if(wc>=95&&(t%9)<0.12){ctx.fillStyle="rgba(255,255,255,.28)";ctx.fillRect(0,0,W,H)}
 }
-function loop(ts){if(!run)return;if(ts-last>33){last=ts;draw(ts/1000)}requestAnimationFrame(loop)}
+let FR=33;
+try{navigator.getBattery&&navigator.getBattery().then(bt=>{const u=()=>{FR=(!bt.charging&&bt.level<=0.2)?100:33};u();bt.addEventListener("levelchange",u);bt.addEventListener("chargingchange",u)})}catch(e){}
+const animOK=()=>!reduce&&window.__mdtAnim!==false;
+function loop(ts){if(!run||!animOK())return;if(ts-last>FR){last=ts;draw(ts/1000)}requestAnimationFrame(loop)}
 size();draw(0);
 addEventListener("resize",()=>{size();draw(performance.now()/1000)});
-document.addEventListener("visibilitychange",()=>{run=!document.hidden&&!reduce;if(run)requestAnimationFrame(loop)});
-if(!reduce)requestAnimationFrame(loop);else setInterval(()=>draw(0),60000);
+document.addEventListener("visibilitychange",()=>{run=!document.hidden;if(run&&animOK())requestAnimationFrame(loop)});
+window.__mdtAnimChg=()=>{if(animOK()){run=!document.hidden;requestAnimationFrame(loop)}else draw(performance.now()/1000)};
+if(animOK())requestAnimationFrame(loop);
+setInterval(()=>{if(!animOK())draw(performance.now()/1000)},60000);
 })();
 </script>
 
